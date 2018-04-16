@@ -32,26 +32,25 @@ import java.util.Map;
 
 public class OrientDBDataStoreFactory extends JDBCDataStoreFactory {
     /** parameter for database type */
-    public static final Param DBTYPE = new Param("dbtype", String.class, "Type", true,"mysql",
+    public static final Param DBTYPE = new Param("dbtype", String.class, "Type", true,"orient",
             Collections.singletonMap(Parameter.LEVEL, "program"));
     /** Default port number for MYSQL */
-    public static final Param PORT = new Param("port", Integer.class, "Port", true, 3306);
-    /** Storage engine to use when creating tables */    
+//    public static final Param PORT = new Param("port", Integer.class, "Port", true, 3306);    
     
     @Override
     protected SQLDialect createSQLDialect(JDBCDataStore dataStore) {
         //return new MySQLDialectPrepared(dataStore);
-        return new OrientDBSQLDialectBasic(dataStore, enhancedSpatialSupport);
+        return new OrientDBSQLDialectBasic(dataStore);
     }
 
     @Override
     public String getDisplayName() {
-        return "MySQL";
+        return "OrientDB";
     }
     
     @Override
     protected String getDriverClassName() {
-        return "com.mysql.jdbc.Driver";
+        return "com.orientechnologies.orient.jdbc.OrientJdbcDriver";
     }
 
     @Override
@@ -61,19 +60,18 @@ public class OrientDBDataStoreFactory extends JDBCDataStoreFactory {
 
     @Override
     public String getDescription() {
-        return "MySQL Database";
+        return "OrientDB store";
     }
 
     @Override
     protected String getValidationQuery() {
-        return "select version()";
+        return "select 1";
     }
     
     @Override
     protected void setupParameters(Map parameters) {
         super.setupParameters(parameters);
         parameters.put(DBTYPE.key, DBTYPE);
-        parameters.put(PORT.key, PORT);        
         
         parameters.remove(SCHEMA.key);
     }
@@ -82,16 +80,24 @@ public class OrientDBDataStoreFactory extends JDBCDataStoreFactory {
     protected JDBCDataStore createDataStoreInternal(JDBCDataStore dataStore, Map params)
             throws IOException {                
         
-        SQLDialect dialect = dataStore.getSQLDialect();
-        if (dialect instanceof OrientDBSQLDialectBasic) {
-            ((OrientDBSQLDialectBasic)dialect).setStorageEngine(storageEngine);
-            ((OrientDBSQLDialectBasic)dialect).setUsePreciseSpatialOps(enhancedSpatialSupport);
-        }
-        else {
-            ((OrientDBSQLDialectPrepared)dialect).setStorageEngine(storageEngine);
-            ((OrientDBSQLDialectPrepared)dialect).setUsePreciseSpatialOps(enhancedSpatialSupport);
-        }
-        
         return dataStore;
     }    
+    
+    @Override
+    protected String getJDBCUrl(Map params) throws IOException {
+        // jdbc url
+        String host = (String) HOST.lookUp(params);
+        Integer port = (Integer) PORT.lookUp(params);
+        String db = (String) DATABASE.lookUp(params);
+        
+        String url = "jdbc:" + getDatabaseID() + ":remote:" + host;
+        if ( port != null ) {
+            url += ":" + port;
+        }
+        
+        if ( db != null ) {
+            url += "/" + db; 
+        }
+        return url;
+    }
 }

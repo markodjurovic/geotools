@@ -54,45 +54,45 @@ public class OrientDBSQLDialect extends SQLDialect {
     /**
      * mysql spatial types
      */
-    protected Integer POINT = new Integer(2001);
-    protected Integer LINESTRING = new Integer(2002);
-    protected Integer POLYGON = new Integer(2003);
-    protected Integer MULTIPOINT = new Integer(2004);
-    protected Integer MULTILINESTRING = new Integer(2005);
-    protected Integer MULTIPOLYGON = new Integer(2006);
-    protected Integer GEOMETRY = new Integer(2007);
+    protected Integer POINT = 2001;
+    protected Integer LINESTRING = 2002;
+    protected Integer POLYGON = 2003;
+    protected Integer MULTIPOINT = 2004;
+    protected Integer MULTILINESTRING = 2005;
+    protected Integer MULTIPOLYGON = 2006;
+    protected Integer GEOMETRY = 2007;
 
     /**
      * the storage engine to use when creating tables, one of MyISAM, InnoDB
      */
-    protected String storageEngine;
+//    protected String storageEngine;
     
     /**
      * flag that indicates that precise spatial operation should be used 
      * (should apply to MySQL versions 5.6 and above)
      */
-    protected boolean usePreciseSpatialOps;
+//    protected boolean usePreciseSpatialOps;
     
     
     public OrientDBSQLDialect(JDBCDataStore dataStore) {
         super(dataStore);
     }
 
-    public void setStorageEngine(String storageEngine) {
-        this.storageEngine = storageEngine;
-    }
+//    public void setStorageEngine(String storageEngine) {
+//        this.storageEngine = storageEngine;
+//    }
     
-    public String getStorageEngine() {
-        return storageEngine;
-    }
+//    public String getStorageEngine() {
+//        return storageEngine;
+//    }
     
-    public void setUsePreciseSpatialOps(boolean usePreciseSpatialOps) {
-        this.usePreciseSpatialOps = usePreciseSpatialOps;
-    }
+//    public void setUsePreciseSpatialOps(boolean usePreciseSpatialOps) {
+//        this.usePreciseSpatialOps = usePreciseSpatialOps;
+//    }
     
-    public boolean getUsePreciseSpatialOps() {
-        return usePreciseSpatialOps;
-    }
+//    public boolean getUsePreciseSpatialOps() {
+//        return usePreciseSpatialOps;
+//    }
     
     @Override
     public boolean includeTable(String schemaName, String tableName, Connection cx)
@@ -231,15 +231,15 @@ public class OrientDBSQLDialect extends SQLDialect {
     @Override
     public void encodeGeometryColumn(GeometryDescriptor gatt, String prefix,
             int srid, Hints hints, StringBuffer sql) {
-        sql.append("asWKB(");
+        sql.append("ST_AsBinary(");
         encodeColumnName(prefix, gatt.getLocalName(), sql);
         sql.append(")");
     }
 
     @Override
     public void encodeGeometryEnvelope(String tableName, String geometryColumn, StringBuffer sql) {
-        sql.append("asWKB(");
-        sql.append("envelope(");
+        sql.append("ST_AsBinary(");
+        sql.append("ST_Envelope(");
         encodeColumnName(null, geometryColumn, sql);
         sql.append("))");
     }
@@ -323,9 +323,7 @@ public class OrientDBSQLDialect extends SQLDialect {
     }
     
     @Override
-    public void encodePostCreateTable(String tableName, StringBuffer sql) {
-        //TODO: make this configurable
-        sql.append("ENGINE=").append(storageEngine);
+    public void encodePostCreateTable(String tableName, StringBuffer sql) {        
     }
     
     @Override
@@ -351,16 +349,16 @@ public class OrientDBSQLDialect extends SQLDialect {
                 //create it
                 Statement st = cx.createStatement();
                 try {
-                    StringBuffer sql = new StringBuffer("CREATE TABLE ");
+                    StringBuffer sql = new StringBuffer("CREATE CLASS ");
                     encodeTableName("geometry_columns", sql);
-                    sql.append("(");
-                    encodeColumnName(null, "f_table_schema", sql); sql.append(" varchar(255), ");
-                    encodeColumnName(null, "f_table_name", sql); sql.append(" varchar(255), ");
-                    encodeColumnName(null, "f_geometry_column", sql); sql.append(" varchar(255), ");
-                    encodeColumnName(null, "coord_dimension", sql); sql.append(" int, ");
-                    encodeColumnName(null, "srid", sql); sql.append(" int, ");
-                    encodeColumnName(null, "type", sql); sql.append(" varchar(32)");
-                    sql.append(")");
+//                    sql.append("(");
+//                    encodeColumnName(null, "f_table_schema", sql); sql.append(" varchar(255), ");
+//                    encodeColumnName(null, "f_table_name", sql); sql.append(" varchar(255), ");
+//                    encodeColumnName(null, "f_geometry_column", sql); sql.append(" varchar(255), ");
+//                    encodeColumnName(null, "coord_dimension", sql); sql.append(" int, ");
+//                    encodeColumnName(null, "srid", sql); sql.append(" int, ");
+//                    encodeColumnName(null, "type", sql); sql.append(" varchar(32)");
+//                    sql.append(")");
                     
                     if (LOGGER.isLoggable(Level.FINE)) { LOGGER.fine(sql.toString()); }
                     st.execute(sql.toString());

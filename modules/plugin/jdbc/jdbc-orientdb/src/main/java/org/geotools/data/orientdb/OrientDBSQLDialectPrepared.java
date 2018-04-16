@@ -42,25 +42,8 @@ public class OrientDBSQLDialectPrepared extends PreparedStatementSQLDialect {
     OrientDBSQLDialect delegate;
     
     public OrientDBSQLDialectPrepared(JDBCDataStore dataStore) {
-    	this( dataStore, false );
-    }
-    
-    public OrientDBSQLDialectPrepared(JDBCDataStore dataStore, boolean usePreciseSpatialOps) {
         super( dataStore );
-        delegate = new OrientDBSQLDialect(dataStore);
-        delegate.setUsePreciseSpatialOps(usePreciseSpatialOps);
-    }
-    
-    public void setStorageEngine(String storageEngine) {
-        delegate.setStorageEngine(storageEngine);
-    }
-
-    public void setUsePreciseSpatialOps(boolean usePreciseSpatialOps) {
-    	delegate.setUsePreciseSpatialOps(usePreciseSpatialOps);
-    }
-    
-    public boolean getUsePreciseSpatialOps() {
-    	return delegate.getUsePreciseSpatialOps();
+        delegate = new OrientDBSQLDialect(dataStore);        
     }
     
     @Override

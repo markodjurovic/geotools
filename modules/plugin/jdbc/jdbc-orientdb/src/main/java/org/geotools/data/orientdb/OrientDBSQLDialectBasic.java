@@ -42,25 +42,8 @@ public class OrientDBSQLDialectBasic extends BasicSQLDialect {
     OrientDBSQLDialect delegate;
     
     public OrientDBSQLDialectBasic(JDBCDataStore dataStore) {
-        this( dataStore, false );
-    }
-    
-    public OrientDBSQLDialectBasic(JDBCDataStore dataStore, boolean usePreciseSpatialOps) {
         super( dataStore );
-        delegate = new OrientDBSQLDialect(dataStore);
-        delegate.setUsePreciseSpatialOps(usePreciseSpatialOps);
-    }
-    
-    public void setStorageEngine(String storageEngine) {
-        delegate.setStorageEngine(storageEngine);
-    }
-
-    public void setUsePreciseSpatialOps(boolean usePreciseSpatialOps) {
-        delegate.setUsePreciseSpatialOps(usePreciseSpatialOps);
-    }
-
-    public boolean getUsePreciseSpatialOps() {
-        return delegate.getUsePreciseSpatialOps();
+        delegate = new OrientDBSQLDialect(dataStore);        
     }
     
     @Override
@@ -170,12 +153,8 @@ public class OrientDBSQLDialectBasic extends BasicSQLDialect {
     @Override
     public void encodeGeometryValue(Geometry value, int dimension, int srid, StringBuffer sql)
             throws IOException {
-        if (value != null) {
-            if (delegate.usePreciseSpatialOps) {
-                sql.append("ST_GeomFromText('");
-            } else {
-                sql.append("GeomFromText('");
-            }
+        if (value != null) {            
+            sql.append("ST_GeomFromText('");            
             sql.append(new WKTWriter().write(value));
             sql.append("', ").append(srid).append(")");
         } else {
@@ -203,15 +182,10 @@ public class OrientDBSQLDialectBasic extends BasicSQLDialect {
     @Override
     public void encodeGeometryEnvelope(String tableName, String geometryColumn,
                                        StringBuffer sql) {
-        if (delegate.usePreciseSpatialOps) {
-            sql.append("ST_AsWKB(");
-            sql.append("ST_envelope(");
-        } else {
-            sql.append("asWKB(");
-            sql.append("envelope(");
-        }
-
-        encodeColumnName(geometryColumn, sql);
+        
+        sql.append("ST_AsBinary(");
+          sql.append("ST_Envelope(");
+            encodeColumnName(geometryColumn, sql);
         sql.append("))");
     }
     
@@ -248,7 +222,7 @@ public class OrientDBSQLDialectBasic extends BasicSQLDialect {
 
     @Override
     public FilterToSQL createFilterToSQL() {
-        return new OrientDBSQLFilterToSQL(delegate.getUsePreciseSpatialOps());
+        return new OrientDBSQLFilterToSQL();
     }
     
     @Override

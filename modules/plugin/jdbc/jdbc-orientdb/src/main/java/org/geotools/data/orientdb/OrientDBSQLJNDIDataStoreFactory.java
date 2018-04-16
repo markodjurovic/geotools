@@ -30,7 +30,6 @@ public class OrientDBSQLJNDIDataStoreFactory extends JDBCJNDIDataStoreFactory {
     
     @Override
     protected void setupParameters(Map parameters) {
-        super.setupParameters(parameters);
-        parameters.put(STORAGE_ENGINE.key, STORAGE_ENGINE);
+        super.setupParameters(parameters);        
     }
 }
