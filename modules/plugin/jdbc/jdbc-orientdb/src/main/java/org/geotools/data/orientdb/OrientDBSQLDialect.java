@@ -336,26 +336,16 @@ public class OrientDBSQLDialect extends SQLDialect {
         DatabaseMetaData md = cx.getMetaData();
         ResultSet rs = md.getTables(null, dataStore.escapeNamePattern(md, schemaName),
                 dataStore.escapeNamePattern(md, "geometry_columns"), new String[]{"TABLE"});
-        boolean classCreated = false;
+        
         try {
             if (!rs.next()) {
                 //create it
                 Statement st = cx.createStatement();
                 try {
                     StringBuffer sql = new StringBuffer("CREATE CLASS ");
-                    encodeTableName("geometry_columns", sql);
-//                    sql.append("(");
-//                    encodeColumnName(null, "f_table_schema", sql); sql.append(" varchar(255), ");
-//                    encodeColumnName(null, "f_table_name", sql); sql.append(" varchar(255), ");
-//                    encodeColumnName(null, "f_geometry_column", sql); sql.append(" varchar(255), ");
-//                    encodeColumnName(null, "coord_dimension", sql); sql.append(" int, ");
-//                    encodeColumnName(null, "srid", sql); sql.append(" int, ");
-//                    encodeColumnName(null, "type", sql); sql.append(" varchar(32)");
-//                    sql.append(")");
-                    
+                    encodeTableName("geometry_columns", sql);                   
                     if (LOGGER.isLoggable(Level.FINE)) { LOGGER.fine(sql.toString()); }
-                    st.execute(sql.toString());
-                    classCreated = true;
+                    st.execute(sql.toString());                   
                 }
                 finally {
                     dataStore.closeSafe(st);
