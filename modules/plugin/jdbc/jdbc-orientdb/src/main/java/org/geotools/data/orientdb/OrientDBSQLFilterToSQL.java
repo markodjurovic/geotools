@@ -47,8 +47,7 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
     }
 
     @Override
-    protected FilterCapabilities createFilterCapabilities() {
-        //MySQL does not actually implement all of the special functions
+    protected FilterCapabilities createFilterCapabilities() {        
         FilterCapabilities caps = super.createFilterCapabilities();
         caps.addType(BBOX.class);
         caps.addType(Contains.class);

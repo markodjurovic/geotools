@@ -230,4 +230,9 @@ public class OrientDBSQLDialectBasic extends BasicSQLDialect {
             String indexName) throws SQLException {
         delegate.dropIndex(cx, schema, databaseSchema, indexName);
     }
+    
+    @Override
+    public void encodeCreateTable(StringBuffer sql) {
+        sql.append("CREATE CLASS ");
+    }
 }

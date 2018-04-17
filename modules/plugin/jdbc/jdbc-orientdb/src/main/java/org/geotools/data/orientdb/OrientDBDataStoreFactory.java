@@ -33,14 +33,11 @@ import java.util.Map;
 public class OrientDBDataStoreFactory extends JDBCDataStoreFactory {
     /** parameter for database type */
     public static final Param DBTYPE = new Param("dbtype", String.class, "Type", true,"orient",
-            Collections.singletonMap(Parameter.LEVEL, "program"));
-    /** Default port number for MYSQL */
-//    public static final Param PORT = new Param("port", Integer.class, "Port", true, 3306);    
+            Collections.singletonMap(Parameter.LEVEL, "program"));    
     
     @Override
-    protected SQLDialect createSQLDialect(JDBCDataStore dataStore) {
-        //return new MySQLDialectPrepared(dataStore);
-        return new OrientDBSQLDialectBasic(dataStore);
+    protected SQLDialect createSQLDialect(JDBCDataStore dataStore) {        
+      return new OrientDBSQLDialectBasic(dataStore);
     }
 
     @Override
@@ -80,20 +77,18 @@ public class OrientDBDataStoreFactory extends JDBCDataStoreFactory {
     protected JDBCDataStore createDataStoreInternal(JDBCDataStore dataStore, Map params)
             throws IOException {                
         
-        return dataStore;
+      OrientDBJDBCDataStore ds = new OrientDBJDBCDataStore(dataStore);
+      return ds;
     }    
     
     @Override
     protected String getJDBCUrl(Map params) throws IOException {
         // jdbc url
         String host = (String) HOST.lookUp(params);
-        Integer port = (Integer) PORT.lookUp(params);
+//        Integer port = (Integer) PORT.lookUp(params);
         String db = (String) DATABASE.lookUp(params);
         
-        String url = "jdbc:" + getDatabaseID() + ":remote:" + host;
-        if ( port != null ) {
-            url += ":" + port;
-        }
+        String url = "jdbc:" + getDatabaseID() + ":remote:" + host;        
         
         if ( db != null ) {
             url += "/" + db; 

@@ -1,2 +1,2 @@
-org.geotools.data.mysql.MySQLDataStoreFactory
-org.geotools.data.mysql.MySQLJNDIDataStoreFactory
+org.geotools.data.orientdb.OrientDBDataStoreFactory
+org.geotools.data.orientdb.OrientDBSQLJNDIDataStoreFactory

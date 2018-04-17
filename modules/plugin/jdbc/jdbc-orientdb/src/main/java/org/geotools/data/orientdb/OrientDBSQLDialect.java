@@ -51,27 +51,14 @@ import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 
 public class OrientDBSQLDialect extends SQLDialect {
-    /**
-     * mysql spatial types
-     */
+   
     protected Integer POINT = 2001;
     protected Integer LINESTRING = 2002;
     protected Integer POLYGON = 2003;
     protected Integer MULTIPOINT = 2004;
     protected Integer MULTILINESTRING = 2005;
     protected Integer MULTIPOLYGON = 2006;
-    protected Integer GEOMETRY = 2007;
-
-    /**
-     * the storage engine to use when creating tables, one of MyISAM, InnoDB
-     */
-//    protected String storageEngine;
-    
-    /**
-     * flag that indicates that precise spatial operation should be used 
-     * (should apply to MySQL versions 5.6 and above)
-     */
-//    protected boolean usePreciseSpatialOps;
+    protected Integer GEOMETRY = 2007;    
     
     
     public OrientDBSQLDialect(JDBCDataStore dataStore) {
@@ -93,6 +80,11 @@ public class OrientDBSQLDialect extends SQLDialect {
 //    public boolean getUsePreciseSpatialOps() {
 //        return usePreciseSpatialOps;
 //    }
+    
+    @Override
+    public void encodeCreateTable(StringBuffer sql) {
+        sql.append("CREATE CLASS ");
+    }
     
     @Override
     public boolean includeTable(String schemaName, String tableName, Connection cx)
@@ -344,6 +336,7 @@ public class OrientDBSQLDialect extends SQLDialect {
         DatabaseMetaData md = cx.getMetaData();
         ResultSet rs = md.getTables(null, dataStore.escapeNamePattern(md, schemaName),
                 dataStore.escapeNamePattern(md, "geometry_columns"), new String[]{"TABLE"});
+        boolean classCreated = false;
         try {
             if (!rs.next()) {
                 //create it
@@ -362,6 +355,7 @@ public class OrientDBSQLDialect extends SQLDialect {
                     
                     if (LOGGER.isLoggable(Level.FINE)) { LOGGER.fine(sql.toString()); }
                     st.execute(sql.toString());
+                    classCreated = true;
                 }
                 finally {
                     dataStore.closeSafe(st);
@@ -370,7 +364,7 @@ public class OrientDBSQLDialect extends SQLDialect {
         }
         finally {
             dataStore.closeSafe(rs);
-        }
+        }                
         
         //create spatial index for all geometry columns
         for (AttributeDescriptor ad : featureType.getAttributeDescriptors()) {
@@ -378,14 +372,34 @@ public class OrientDBSQLDialect extends SQLDialect {
                 continue;
             }
             GeometryDescriptor gd = (GeometryDescriptor) ad;
+            String typeStr = gd.getType().getName().getLocalPart();
+            
+            //create properties
+            {
+              Statement statement = cx.createStatement();
+              StringBuffer sql = new StringBuffer("CREATE PROPERTY ");
+              encodeColumnName(null, gd.getLocalName(), sql);
+              sql.append(" ");
+              sql.append(typeStr);
+              try{
+                statement.execute(sql.toString());
+              }
+              finally{
+                dataStore.closeSafe(statement);
+              }
+            }
             
             if (!ad.isNillable()) {
                 //can only index non null columns
-                StringBuffer sql = new StringBuffer("ALTER TABLE ");
+                StringBuffer sql = new StringBuffer("CREATE INDEX ");
                 encodeTableName(featureType.getTypeName(), sql);
-                sql.append(" ADD SPATIAL INDEX (");
+                sql.append(".");
                 encodeColumnName(null, gd.getLocalName(), sql);
-                sql.append(")");
+                sql.append("_index ON ");
+                encodeTableName(featureType.getTypeName(), sql);
+                sql.append(" (");
+                encodeColumnName(null, gd.getLocalName(), sql);
+                sql.append(") SPATIAL ENGINE LUCENE");
                 
                 LOGGER.fine( sql.toString() );
                 Statement st = cx.createStatement();
@@ -484,16 +498,11 @@ public class OrientDBSQLDialect extends SQLDialect {
     }
     
     @Override
-    public void applyLimitOffset(StringBuffer sql, int limit, int offset) {
-        if(limit >= 0 && limit < Integer.MAX_VALUE) {
-            if(offset > 0)
-                sql.append(" LIMIT ").append(offset).append(", ").append(limit);
-            else 
-                sql.append(" LIMIT ").append(limit);
-        } else if(offset > 0) {
-            // MySql pretends to have limit specified along with offset
-            sql.append(" LIMIT ").append(offset).append(", ").append(Long.MAX_VALUE);
-        }
+    public void applyLimitOffset(StringBuffer sql, int limit, int offset) {        
+      if(offset > 0)
+        sql.append(" SKIP ").append(offset).append(" LIMIT ").append(limit);
+      else 
+        sql.append(" LIMIT ").append(limit);        
     }
 
     

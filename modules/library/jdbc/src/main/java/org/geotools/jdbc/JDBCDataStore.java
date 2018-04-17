@@ -145,7 +145,7 @@ import com.vividsolutions.jts.geom.Point;
  *
  * @source $URL$
  */
-public final class JDBCDataStore extends ContentDataStore
+public class JDBCDataStore extends ContentDataStore
     implements GmlObjectStore {
     
     private static final FilterFactory2 FF2 = CommonFactoryFinder.getFilterFactory2();
@@ -3116,7 +3116,7 @@ public final class JDBCDataStore extends ContentDataStore
     /**
      * Helper method for building a 'CREATE TABLE' sql statement.
      */
-    private String createTableSQL(String tableName, String[] columnNames, String[] sqlTypeNames,
+    protected String createTableSQL(String tableName, String[] columnNames, String[] sqlTypeNames,
         boolean[] nillable, String pkeyColumn, SimpleFeatureType featureType ) throws SQLException {
         //build the create table sql
         StringBuffer sql = new StringBuffer();
@@ -3183,7 +3183,7 @@ public final class JDBCDataStore extends ContentDataStore
      * Searches the attribute descriptor restrictions in an attempt to determine
      * the length of the specified varchar column.
      */
-    private Integer findVarcharColumnLength(AttributeDescriptor att) {
+    protected Integer findVarcharColumnLength(AttributeDescriptor att) {
         for ( Filter r : att.getType().getRestrictions() ) {
             if( r instanceof PropertyIsLessThanOrEqualTo ) {
                 PropertyIsLessThanOrEqualTo c = (PropertyIsLessThanOrEqualTo) r;
