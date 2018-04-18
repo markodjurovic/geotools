@@ -5,17 +5,39 @@
  */
 package org.geotools.data.orientdb;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import org.geotools.data.Transaction;
+import org.geotools.data.store.ContentEntry;
+import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.jdbc.JDBCDataStore;
+import static org.geotools.jdbc.JDBCDataStore.JDBC_READ_ONLY;
+import org.geotools.jdbc.JDBCFeatureSource;
+import org.geotools.jdbc.JDBCFeatureStore;
+import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
+import org.opengis.feature.type.AttributeType;
+import org.opengis.feature.type.GeometryDescriptor;
+import org.opengis.feature.type.Name;
+import org.opengis.feature.type.PropertyDescriptor;
+import org.opengis.filter.Filter;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.util.InternationalString;
 
 /**
  *
  * @author mdjurovi
  */
 public class OrientDBJDBCDataStore extends JDBCDataStore{
+  
+  private String[] sqlTypeNames;
+  private String[] columnNames;
+  private SimpleFeatureType simpleFeatureType;
   
   public OrientDBJDBCDataStore(JDBCDataStore dataStore){    
     super();
@@ -49,6 +71,30 @@ public class OrientDBJDBCDataStore extends JDBCDataStore{
       //encode anything post create table
       dialect.encodePostCreateTable(tableName, sql);
 
+      this.sqlTypeNames = sqlTypeNames;
+      this.columnNames = columnNames;
+      this.simpleFeatureType = featureType;
+      
       return sql.toString();
   }
+  
+  @Override
+  protected ContentFeatureSource createFeatureSource(ContentEntry entry) throws IOException {
+      // grab the schema, it carries a flag telling us if the feature type is read only
+      SimpleFeatureType schema = entry.getState(Transaction.AUTO_COMMIT).getFeatureType();
+      if (schema == null) {
+          // if the schema still haven't been computed, force its computation so
+          // that we can decide if the feature type is read only
+//          schema = new OrientDBJDBCFeatureSource(entry, null).buildFeatureType();
+          schema = simpleFeatureType;          
+          entry.getState(Transaction.AUTO_COMMIT).setFeatureType(schema);
+      }
+
+      Object readOnlyMarker = schema.getUserData().get(JDBC_READ_ONLY);
+      if (Boolean.TRUE.equals(readOnlyMarker)) {
+          return new JDBCFeatureSource(entry, null);
+      }
+      return new JDBCFeatureSource(entry, null);
+  }
+  
 }

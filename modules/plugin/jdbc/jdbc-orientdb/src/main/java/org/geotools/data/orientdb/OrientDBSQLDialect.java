@@ -39,7 +39,6 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
@@ -49,6 +48,7 @@ import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
+import java.util.HashMap;
 
 public class OrientDBSQLDialect extends SQLDialect {
    
@@ -58,8 +58,10 @@ public class OrientDBSQLDialect extends SQLDialect {
     protected Integer MULTIPOINT = 2004;
     protected Integer MULTILINESTRING = 2005;
     protected Integer MULTIPOLYGON = 2006;
-    protected Integer GEOMETRY = 2007;    
-    
+    protected Integer GEOMETRY = 2007;
+
+    private Map<Class<?>, String> classesToSqlTypeNameMappings = null;
+    private Map<Integer, Class<?>> sqlTypesToClasses = null;
     
     public OrientDBSQLDialect(JDBCDataStore dataStore) {
         super(dataStore);
@@ -102,32 +104,16 @@ public class OrientDBSQLDialect extends SQLDialect {
 
     @Override
     public String getGeometryTypeName(Integer type) {
-        if (POINT.equals(type)) {
-            return "POINT";
-        }
-
-        if (MULTIPOINT.equals(type)) {
-            return "MULTIPOINT";
-        }
-
-        if (LINESTRING.equals(type)) {
-            return "LINESTRING";
-        }
-
-        if (MULTILINESTRING.equals(type)) {
-            return "MULTILINESTRING";
-        }
-
-        if (POLYGON.equals(type)) {
-            return "POLYGON";
-        }
-
-        if (MULTIPOLYGON.equals(type)) {
-            return "MULTIPOLYGON";
-        }
-
-        if (GEOMETRY.equals(type)) {
-            return "GEOMETRY";
+      if (sqlTypesToClasses == null){
+        registerSqlTypeToClassMappings(new HashMap<>());
+      }  
+      
+      Class<?> classType = sqlTypesToClasses.get(type);
+        if (classType != null){
+          String sqlTypeName = getSqlTypeNameForClass(classType);
+          if (sqlTypeName != null){
+            return sqlTypeName;
+          }
         }
 
         return super.getGeometryTypeName(type);
@@ -278,7 +264,7 @@ public class OrientDBSQLDialect extends SQLDialect {
         mappings.put(MultiPoint.class, MULTIPOINT);
         mappings.put(MultiLineString.class, MULTILINESTRING);
         mappings.put(MultiPolygon.class, MULTIPOLYGON);
-        mappings.put(Geometry.class, GEOMETRY);
+//        mappings.put(Geometry.class, GEOMETRY);
     }
 
     @Override
@@ -291,27 +277,54 @@ public class OrientDBSQLDialect extends SQLDialect {
         mappings.put(MULTIPOINT, MultiPoint.class);
         mappings.put(MULTILINESTRING, MultiLineString.class);
         mappings.put(MULTIPOLYGON, MultiPolygon.class);
-        mappings.put(GEOMETRY, Geometry.class);
+//        mappings.put(GEOMETRY, Geometry.class);
+        
+        sqlTypesToClasses = mappings;
     }
 
     @Override
     public void registerSqlTypeNameToClassMappings(Map<String, Class<?>> mappings) {
         super.registerSqlTypeNameToClassMappings(mappings);
 
-        mappings.put("POINT", Point.class);
-        mappings.put("LINESTRING", LineString.class);
-        mappings.put("POLYGON", Polygon.class);
-        mappings.put("MULTIPOINT", MultiPoint.class);
-        mappings.put("MULTILINESTRING", MultiLineString.class);
-        mappings.put("MULTIPOLYGON", MultiPolygon.class);
-        mappings.put("GEOMETRY", Geometry.class);
-        mappings.put("GEOMETRYCOLLETION", GeometryCollection.class);
+        mappings.put("OPoint", Point.class);
+        mappings.put("OLine", LineString.class);
+        mappings.put("OPolygon", Polygon.class);
+        mappings.put("OMultiPoint", MultiPoint.class);
+        mappings.put("OMultiline", MultiLineString.class);
+        mappings.put("OMultiPlygon", MultiPolygon.class);
+//        mappings.put("GEOMETRY", Geometry.class);
+//        mappings.put("GEOMETRYCOLLETION", GeometryCollection.class);
     }
-
+        
     @Override
     public void registerSqlTypeToSqlTypeNameOverrides(
             Map<Integer, String> overrides) {
         overrides.put( Types.BOOLEAN, "BOOL");
+    }
+    
+    //reverse of registerSqlTypeNameToClassMappings
+    private void registerClassToSqlTypeName(){
+      if (classesToSqlTypeNameMappings == null){
+        classesToSqlTypeNameMappings = new HashMap<>();
+      }
+      else{
+        return;
+      }
+      
+      classesToSqlTypeNameMappings.put(Point.class, "OPoint");
+      classesToSqlTypeNameMappings.put(LineString.class, "OLine");
+      classesToSqlTypeNameMappings.put(Polygon.class, "OPolygon");
+      classesToSqlTypeNameMappings.put(MultiPoint.class, "OMultiPoint");
+      classesToSqlTypeNameMappings.put(MultiLineString.class, "OMultiline");
+      classesToSqlTypeNameMappings.put(MultiPolygon.class, "OMultiPlygon");
+//      classesToSqlTypeNameMappings.put(Geometry.class, "GEOMETRY");
+//      classesToSqlTypeNameMappings.put(GeometryCollection.class, "GEOMETRYCOLLETION");
+    }
+    
+    public String getSqlTypeNameForClass(Class<?> classType){
+      if (classesToSqlTypeNameMappings == null)
+        registerClassToSqlTypeName();
+      return classesToSqlTypeNameMappings.get(classType);
     }
     
     @Override
@@ -361,15 +374,19 @@ public class OrientDBSQLDialect extends SQLDialect {
             if (!(ad instanceof GeometryDescriptor)) {
                 continue;
             }
-            GeometryDescriptor gd = (GeometryDescriptor) ad;
-            String typeStr = gd.getType().getName().getLocalPart();
+            GeometryDescriptor gd = (GeometryDescriptor) ad;                        
+            Class type = gd.getType().getBinding();
+            String typeStr = getSqlTypeNameForClass(type);
+            String className = featureType.getTypeName();
             
             //create properties
             {
               Statement statement = cx.createStatement();
               StringBuffer sql = new StringBuffer("CREATE PROPERTY ");
+              encodeTableName(className, sql);
+              sql.append(".");
               encodeColumnName(null, gd.getLocalName(), sql);
-              sql.append(" ");
+              sql.append(" EMBEDDED ");
               sql.append(typeStr);
               try{
                 statement.execute(sql.toString());
