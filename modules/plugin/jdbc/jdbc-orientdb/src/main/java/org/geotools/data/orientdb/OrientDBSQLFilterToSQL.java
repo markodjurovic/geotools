@@ -71,7 +71,7 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
             //WKT does not support linear rings
             g = g.getFactory().createLineString(((LinearRing) g).getCoordinateSequence());
         }
-        out.write( "GeomFromText('"+g.toText()+"', "+currentSRID+")");
+        out.write( "ST_GeomFromText('" + g.toText() + "')");//+"', "+currentSRID+")");                
     }
 
     @Override
@@ -120,11 +120,11 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
                 }
                 out.write(Double.toString(((DistanceBufferOperator) filter).getDistance()));
             } else if (filter instanceof BBOX) {
-                out.write("MbrIntersects(");
+                out.write("ST_Intersects(");
                 e1.accept(this, extraData);
                 out.write(",");
                 e2.accept(this, extraData);
-                out.write(")");
+                out.write(") = true");
             } else {
 
                 if (filter instanceof Contains) {

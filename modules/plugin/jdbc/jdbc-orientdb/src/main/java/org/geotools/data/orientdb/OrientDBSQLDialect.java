@@ -396,7 +396,7 @@ public class OrientDBSQLDialect extends SQLDialect {
               }
             }
             
-            if (!ad.isNillable()) {
+            if (true){//(!ad.isNillable()) {
                 //can only index non null columns
                 StringBuffer sql = new StringBuffer("CREATE INDEX ");
                 encodeTableName(featureType.getTypeName(), sql);
