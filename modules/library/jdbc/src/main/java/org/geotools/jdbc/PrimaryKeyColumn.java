@@ -46,4 +46,8 @@ public abstract class PrimaryKeyColumn {
         return type;
     }
     
+    public void setType(Class type){
+      this.type = type;
+    }
+    
 }

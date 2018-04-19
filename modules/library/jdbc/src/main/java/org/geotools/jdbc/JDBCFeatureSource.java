@@ -161,7 +161,7 @@ public class JDBCFeatureSource extends ContentFeatureSource {
     /**
      * Builds the feature type from database metadata.
      */
-    protected SimpleFeatureType buildFeatureType() throws IOException {
+    public SimpleFeatureType buildFeatureType() throws IOException {
         //grab the primary key
         PrimaryKey pkey = getDataStore().getPrimaryKey(entry);
         VirtualTable virtualTable = getDataStore().getVirtualTables().get(entry.getTypeName());
@@ -789,7 +789,7 @@ public class JDBCFeatureSource extends ContentFeatureSource {
      * @return
      * @throws SQLException
      */
-    List<ColumnMetadata> getColumnMetadata(Connection cx, String databaseSchema, String tableName, SQLDialect dialect)
+    protected List<ColumnMetadata> getColumnMetadata(Connection cx, String databaseSchema, String tableName, SQLDialect dialect)
             throws SQLException {
         List<ColumnMetadata> result = new ArrayList<ColumnMetadata>();
 
@@ -833,7 +833,7 @@ public class JDBCFeatureSource extends ContentFeatureSource {
                 column.typeName = columns.getString("TYPE_NAME");
                 column.sqlType = columns.getInt("DATA_TYPE");
                 column.nullable = "YES".equalsIgnoreCase(columns.getString("IS_NULLABLE"));
-                column.binding = dialect.getMapping(columns, cx);
+                column.binding = dialect.getMapping(columns, cx);                
                 
                 //support for user defined types, allow the dialect to handle them
                 if (column.sqlType == Types.DISTINCT) {
@@ -857,7 +857,7 @@ public class JDBCFeatureSource extends ContentFeatureSource {
      * @return
      * @throws SQLException
      */
-    static List<ColumnMetadata> getColumnMetadata(Connection cx, VirtualTable vtable, SQLDialect dialect, JDBCDataStore store) throws SQLException {
+    public static List<ColumnMetadata> getColumnMetadata(Connection cx, VirtualTable vtable, SQLDialect dialect, JDBCDataStore store) throws SQLException {
         List<ColumnMetadata> result = new ArrayList<ColumnMetadata>();
 
         Statement st = null;
