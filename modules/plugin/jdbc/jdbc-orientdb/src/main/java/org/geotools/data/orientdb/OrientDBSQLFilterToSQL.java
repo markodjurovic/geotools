@@ -66,10 +66,10 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
     }
     
     private static void clampLongitude(Coordinate coordinate){
-      if (coordinate.x > 180.)
-        coordinate.x = 180.;
-      if (coordinate.x < -180.)
-        coordinate.x = -180.;
+      if (coordinate.x > 90.)
+        coordinate.x = 90.;
+      if (coordinate.x < -90.)
+        coordinate.x = -90.;
     }
     
     private static void clampLattitude(Coordinate coordinate){

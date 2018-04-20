@@ -7,7 +7,11 @@ package org.geotools.data.orientdb;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.geotools.data.Transaction;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
@@ -19,26 +23,33 @@ import org.opengis.feature.simple.SimpleFeatureType;
  *
  * @author mdjurovi
  */
-public class OrientDBJDBCDataStore extends JDBCDataStore{
+public class OrientDBJDBCDataStore extends JDBCDataStore{   
   
-  private String[] sqlTypeNames;
-  private String[] columnNames;
-  private SimpleFeatureType simpleFeatureType;
+  private Field[] getAllFields(){
+      List<Field> retList = new ArrayList<>();
+      Class currentClass = JDBCDataStore.class;
+      while (currentClass != null && currentClass != Object.class){
+        Field[] fields = currentClass.getDeclaredFields();
+        retList.addAll(Arrays.asList(fields));
+        currentClass = currentClass.getSuperclass();
+      }
+      
+      return retList.toArray(new Field[0]);
+  }
   
   public OrientDBJDBCDataStore(JDBCDataStore dataStore){    
-    super();
-    LOGGER.info("OPAAAAAAAAAAAAAAAAAAAAAAAAAA");
-    Field[] fields = JDBCDataStore.class.getDeclaredFields();
+    super();    
+    Field[] fields = getAllFields();
     for (Field field : fields){
-      try{
-        LOGGER.info("Constructor field: " + field.getName());
+      if (field.isSynthetic() || Modifier.isStatic(field.getModifiers())){
+        continue;
+      }      
+      try{        
         field.setAccessible(true);
         field.set(this, field.get(dataStore));
       }
       catch (IllegalAccessException exc){
-        LOGGER.info("Error constructor: " + exc.getLocalizedMessage());
-        int a = 0;
-        ++a;
+        LOGGER.info("Error constructor: " + exc.getLocalizedMessage());        
         //should never happend
       }
     }
@@ -55,11 +66,7 @@ public class OrientDBJDBCDataStore extends JDBCDataStore{
       encodeTableName(tableName, sql, null);      
 
       //encode anything post create table
-      dialect.encodePostCreateTable(tableName, sql);
-
-      this.sqlTypeNames = sqlTypeNames;
-      this.columnNames = columnNames;
-      this.simpleFeatureType = featureType;
+      dialect.encodePostCreateTable(tableName, sql);      
       
       return sql.toString();
   }
