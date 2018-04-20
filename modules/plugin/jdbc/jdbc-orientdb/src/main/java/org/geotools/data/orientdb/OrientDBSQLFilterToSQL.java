@@ -16,6 +16,7 @@
  */
 package org.geotools.data.orientdb;
 
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LinearRing;
 import org.geotools.data.jdbc.FilterToSQL;
@@ -64,9 +65,32 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
         return caps;
     }
     
+    private static void clampLongitude(Coordinate coordinate){
+      if (coordinate.x > 180.)
+        coordinate.x = 180.;
+      if (coordinate.x < -180.)
+        coordinate.x = -180.;
+    }
+    
+    private static void clampLattitude(Coordinate coordinate){
+      if (coordinate.y > 90.)
+        coordinate.y = 90.;
+      if (coordinate.y < -90.)
+        coordinate.y = -90.;
+    }
+    
+    private static void clampCoordinates(Geometry g){
+      Coordinate[] coordinates = g.getCoordinates();
+      for (Coordinate coordinate : coordinates){
+        clampLongitude(coordinate);
+        clampLattitude(coordinate);
+      }
+    }
+    
     @Override
     protected void visitLiteralGeometry(Literal expression) throws IOException {
         Geometry g = (Geometry) evaluateLiteral(expression, Geometry.class);
+        clampCoordinates(g);
         if (g instanceof LinearRing) {
             //WKT does not support linear rings
             g = g.getFactory().createLineString(((LinearRing) g).getCoordinateSequence());
