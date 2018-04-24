@@ -39,6 +39,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryCollection;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
@@ -59,6 +60,7 @@ public class OrientDBSQLDialect extends SQLDialect {
     protected Integer MULTILINESTRING = 2005;
     protected Integer MULTIPOLYGON = 2006;
     protected Integer GEOMETRY = 2007;
+    protected Integer GEOMETRY_COLLECTION = 2008;
 
     private Map<Class<?>, String> classesToSqlTypeNameMappings = null;
     private Map<Integer, Class<?>> sqlTypesToClasses = null;
@@ -265,6 +267,7 @@ public class OrientDBSQLDialect extends SQLDialect {
         mappings.put(MultiLineString.class, MULTILINESTRING);
         mappings.put(MultiPolygon.class, MULTIPOLYGON);
 //        mappings.put(Geometry.class, GEOMETRY);
+        mappings.put(GeometryCollection.class, GEOMETRY_COLLECTION);
     }
 
     @Override
@@ -278,6 +281,7 @@ public class OrientDBSQLDialect extends SQLDialect {
         mappings.put(MULTILINESTRING, MultiLineString.class);
         mappings.put(MULTIPOLYGON, MultiPolygon.class);
 //        mappings.put(GEOMETRY, Geometry.class);
+        mappings.put(GEOMETRY_COLLECTION, GeometryCollection.class);
         
         sqlTypesToClasses = mappings;
     }
@@ -293,7 +297,7 @@ public class OrientDBSQLDialect extends SQLDialect {
         mappings.put("OMultiline", MultiLineString.class);
         mappings.put("OMultiPlygon", MultiPolygon.class);
 //        mappings.put("GEOMETRY", Geometry.class);
-//        mappings.put("GEOMETRYCOLLETION", GeometryCollection.class);
+        mappings.put("OGeometryCollection", GeometryCollection.class);
     }
         
     @Override
@@ -318,7 +322,7 @@ public class OrientDBSQLDialect extends SQLDialect {
       classesToSqlTypeNameMappings.put(MultiLineString.class, "OMultiline");
       classesToSqlTypeNameMappings.put(MultiPolygon.class, "OMultiPlygon");
 //      classesToSqlTypeNameMappings.put(Geometry.class, "GEOMETRY");
-//      classesToSqlTypeNameMappings.put(GeometryCollection.class, "GEOMETRYCOLLETION");
+      classesToSqlTypeNameMappings.put(GeometryCollection.class, "OGeometryCollection");
     }
     
     public String getSqlTypeNameForClass(Class<?> classType){
@@ -461,13 +465,7 @@ public class OrientDBSQLDialect extends SQLDialect {
             }
         }
         
-    }
-
-    @Override
-    public void encodePrimaryKey(String column, StringBuffer sql) {
-        encodeColumnName(null, column, sql);
-        sql.append(" int AUTO_INCREMENT PRIMARY KEY");
-    }
+    }    
 
     @Override
     public boolean lookupGeneratedValuesPostInsert() {
