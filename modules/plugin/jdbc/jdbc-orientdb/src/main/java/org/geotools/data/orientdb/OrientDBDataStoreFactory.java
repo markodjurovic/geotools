@@ -16,6 +16,7 @@
  */
 package org.geotools.data.orientdb;
 
+import com.vividsolutions.jts.geom.GeometryFactory;
 import org.geotools.data.Parameter;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.JDBCDataStoreFactory;
@@ -24,6 +25,23 @@ import org.geotools.jdbc.SQLDialect;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import javax.sql.DataSource;
+import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.feature.type.FeatureTypeFactoryImpl;
+import org.geotools.jdbc.CompositePrimaryKeyFinder;
+import org.geotools.jdbc.HeuristicPrimaryKeyFinder;
+import static org.geotools.jdbc.JDBCDataStoreFactory.BATCH_INSERT_SIZE;
+import static org.geotools.jdbc.JDBCDataStoreFactory.CALLBACK_FACTORY;
+import static org.geotools.jdbc.JDBCDataStoreFactory.DATASOURCE;
+import static org.geotools.jdbc.JDBCDataStoreFactory.EXPOSE_PK;
+import static org.geotools.jdbc.JDBCDataStoreFactory.FETCHSIZE;
+import static org.geotools.jdbc.JDBCDataStoreFactory.NAMESPACE;
+import static org.geotools.jdbc.JDBCDataStoreFactory.PK_METADATA_TABLE;
+import static org.geotools.jdbc.JDBCDataStoreFactory.SCHEMA;
+import static org.geotools.jdbc.JDBCDataStoreFactory.SQL_ON_BORROW;
+import static org.geotools.jdbc.JDBCDataStoreFactory.SQL_ON_RELEASE;
+import org.geotools.jdbc.MetadataTablePrimaryKeyFinder;
+import org.geotools.jdbc.SessionCommandsListener;
 
 
 /**
@@ -94,5 +112,13 @@ public class OrientDBDataStoreFactory extends JDBCDataStoreFactory {
             url += "/" + db; 
         }
         return url;
+    }
+    
+    @Override
+    public JDBCDataStore createDataStore(Map params)
+        throws IOException {
+        JDBCDataStore dataStore = super.createDataStore(params);
+        dataStore.setCallbackFactory(new OrientDBCallBackFactory());
+        return dataStore;
     }
 }

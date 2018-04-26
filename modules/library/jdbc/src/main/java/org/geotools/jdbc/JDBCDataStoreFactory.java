@@ -210,7 +210,7 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
         }
     }
     
-    public final JDBCDataStore createDataStore(Map params)
+    public JDBCDataStore createDataStore(Map params)
         throws IOException {
         JDBCDataStore dataStore = new JDBCDataStore();
         
