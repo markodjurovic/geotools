@@ -321,7 +321,7 @@ public class OrientDBSQLDialect extends SQLDialect {
       classesToSqlTypeNameMappings.put(MultiPoint.class, "OMultiPoint");
       classesToSqlTypeNameMappings.put(MultiLineString.class, "OMultiline");
       classesToSqlTypeNameMappings.put(MultiPolygon.class, "OMultiPlygon");
-      classesToSqlTypeNameMappings.put(Geometry.class, "GEOMETRY");
+      classesToSqlTypeNameMappings.put(Geometry.class, "OGeometry");
       classesToSqlTypeNameMappings.put(GeometryCollection.class, "OGeometryCollection");
     }
     
