@@ -3,11 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.geotools.data.orientdb;
+package org.geotools.jdbc;
 
 import java.sql.SQLException;
-import org.geotools.jdbc.JDBCFeatureReader;
-import org.geotools.jdbc.JDBCReaderCallback;
 
 /**
  *
@@ -17,9 +15,9 @@ public class OrientDBreaderCallback implements JDBCReaderCallback{
   
     @Override
     public void finish(JDBCFeatureReader reader) {
-        if (reader.getRs() != null){
+        if (reader.rs != null){
             try{
-                reader.getRs().close();
+                reader.rs.close();
             }
             catch (SQLException exc){
                 throw new RuntimeException(exc);

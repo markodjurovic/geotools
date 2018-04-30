@@ -186,9 +186,6 @@ public abstract class ContentFeatureSource implements SimpleFeatureSource {
         return entry;
     }
     
-    public Query getQuery(){
-      return query;
-    }
     /**
      * The current transaction the feature source is working against.
      * <p>

@@ -5,6 +5,7 @@
  */
 package org.geotools.data.orientdb;
 
+import org.geotools.jdbc.OrientDBreaderCallback;
 import org.geotools.jdbc.JDBCCallbackFactory;
 import org.geotools.jdbc.JDBCReaderCallback;
 

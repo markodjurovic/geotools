@@ -303,10 +303,6 @@ public class JDBCFeatureReader implements  FeatureReader<SimpleFeatureType, Simp
     public Query getQuery() {
         return query;
     }
-    
-    public ResultSet getRs(){
-      return rs;
-    }
 
     public boolean hasNext() throws IOException {
         ensureOpen();

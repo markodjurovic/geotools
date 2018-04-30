@@ -1090,7 +1090,7 @@ public class JDBCDataStore extends ContentDataStore
      * the underlying database metadata.
      *
      */
-    public PrimaryKey getPrimaryKey(ContentEntry entry)
+    protected PrimaryKey getPrimaryKey(ContentEntry entry)
         throws IOException {
         JDBCState state = (JDBCState) entry.getState(Transaction.AUTO_COMMIT);
 
@@ -2137,7 +2137,7 @@ public class JDBCDataStore extends ContentDataStore
     /**
      * Gets a database connection for the specified feature store.
      */
-    public final Connection getConnection(JDBCState state) throws IOException {
+    protected final Connection getConnection(JDBCState state) throws IOException {
         return getConnection(state.getTransaction());
     }
 
@@ -2177,7 +2177,7 @@ public class JDBCDataStore extends ContentDataStore
      * If the state is based off the AUTO_COMMIT transaction - close using {@link #closeSafe(Connection)}.
      * Otherwise wait until the transaction itself is closed to close the connection.
      */
-    public final void releaseConnection( Connection cx, JDBCState state ) {
+    protected final void releaseConnection( Connection cx, JDBCState state ) {
         if ( state.getTransaction() == Transaction.AUTO_COMMIT ) {
             closeSafe( cx );
         }
@@ -2465,7 +2465,7 @@ public class JDBCDataStore extends ContentDataStore
      * Helper method for creating geometry association table if it does not
      * exist.
      */
-    public void ensureAssociationTablesExist(Connection cx)
+    protected void ensureAssociationTablesExist(Connection cx)
         throws IOException, SQLException {
         // look for feature relationship table
         DatabaseMetaData metadata = cx.getMetaData();
@@ -2654,7 +2654,7 @@ public class JDBCDataStore extends ContentDataStore
      * @param table The table of the association
      * @param column The column of the association
      */
-    public String selectRelationshipSQL(String table, String column) throws SQLException {
+    protected String selectRelationshipSQL(String table, String column) throws SQLException {
         BasicSQLDialect dialect = (BasicSQLDialect) getSQLDialect();
         
         StringBuffer sql = new StringBuffer();
@@ -2698,7 +2698,7 @@ public class JDBCDataStore extends ContentDataStore
      * @param table The table of the association
      * @param column The column of the association
      */
-    public PreparedStatement selectRelationshipSQLPS(String table, String column, Connection cx) 
+    protected PreparedStatement selectRelationshipSQLPS(String table, String column, Connection cx) 
         throws SQLException {
         PreparedStatementSQLDialect dialect = (PreparedStatementSQLDialect) getSQLDialect();
         
@@ -3183,7 +3183,7 @@ public class JDBCDataStore extends ContentDataStore
      * Searches the attribute descriptor restrictions in an attempt to determine
      * the length of the specified varchar column.
      */
-    protected Integer findVarcharColumnLength(AttributeDescriptor att) {
+    private Integer findVarcharColumnLength(AttributeDescriptor att) {
         for ( Filter r : att.getType().getRestrictions() ) {
             if( r instanceof PropertyIsLessThanOrEqualTo ) {
                 PropertyIsLessThanOrEqualTo c = (PropertyIsLessThanOrEqualTo) r;

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.geotools.data.orientdb;
+package org.geotools.jdbc;
 
 import com.vividsolutions.jts.geom.Geometry;
 import java.io.IOException;
@@ -22,16 +22,6 @@ import org.geotools.data.store.ContentEntry;
 import org.geotools.factory.Hints;
 import org.geotools.feature.AttributeTypeBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.geotools.jdbc.ColumnMetadata;
-import org.geotools.jdbc.JDBCDataStore;
-import org.geotools.jdbc.JDBCFeatureSource;
-import org.geotools.jdbc.JDBCState;
-import org.geotools.jdbc.NullPrimaryKey;
-import org.geotools.jdbc.PreparedStatementSQLDialect;
-import org.geotools.jdbc.PrimaryKey;
-import org.geotools.jdbc.PrimaryKeyColumn;
-import org.geotools.jdbc.SQLDialect;
-import org.geotools.jdbc.VirtualTable;
 import org.opengis.feature.Association;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
@@ -213,7 +203,7 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
                     }
                     // in views we don't know the pk type, grab it now
                     if(pkeycol.getType() == null) {
-                        pkeycol.setType(column.getBinding());
+                        pkeycol.type = column.getBinding();
                     }
                 }
              
