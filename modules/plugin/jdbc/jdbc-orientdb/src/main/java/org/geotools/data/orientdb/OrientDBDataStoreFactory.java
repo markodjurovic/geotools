@@ -27,26 +27,28 @@ import static org.geotools.jdbc.JDBCDataStoreFactory.SCHEMA;
 import org.geotools.jdbc.OrientDBJDBCDataStore;
 import org.geotools.jdbc.SQLDialect;
 
-
 /**
  * DataStoreFactory for OrientDB
- **/
-
+ *
+ */
 public class OrientDBDataStoreFactory extends JDBCDataStoreFactory {
-    /** parameter for database type */
-    public static final Param DBTYPE = new Param("dbtype", String.class, "Type", true,"orient",
-            Collections.singletonMap(Parameter.LEVEL, "program"));    
-    
+
+    /**
+     * parameter for database type
+     */
+    public static final Param DBTYPE = new Param("dbtype", String.class, "Type", true, "orient",
+            Collections.singletonMap(Parameter.LEVEL, "program"));
+
     @Override
-    protected SQLDialect createSQLDialect(JDBCDataStore dataStore) {        
-      return new OrientDBSQLDialectBasic(dataStore);
+    protected SQLDialect createSQLDialect(JDBCDataStore dataStore) {
+        return new OrientDBSQLDialectBasic(dataStore);
     }
 
     @Override
     public String getDisplayName() {
         return "OrientDB";
     }
-    
+
     @Override
     protected String getDriverClassName() {
         return "com.orientechnologies.orient.jdbc.OrientJdbcDriver";
@@ -66,41 +68,41 @@ public class OrientDBDataStoreFactory extends JDBCDataStoreFactory {
     protected String getValidationQuery() {
         return "select 1";
     }
-    
+
     @Override
     protected void setupParameters(Map parameters) {
         super.setupParameters(parameters);
         parameters.put(DBTYPE.key, DBTYPE);
-        
+
         parameters.remove(SCHEMA.key);
     }
-    
+
     @Override
     protected JDBCDataStore createDataStoreInternal(JDBCDataStore dataStore, Map params)
-            throws IOException {                
-        
-      OrientDBJDBCDataStore ds = new OrientDBJDBCDataStore(dataStore);
-      return ds;
-    }    
-    
+            throws IOException {
+
+        OrientDBJDBCDataStore ds = new OrientDBJDBCDataStore(dataStore);
+        return ds;
+    }
+
     @Override
     protected String getJDBCUrl(Map params) throws IOException {
         // jdbc url
         String host = (String) HOST.lookUp(params);
 //        Integer port = (Integer) PORT.lookUp(params);
         String db = (String) DATABASE.lookUp(params);
-        
-        String url = "jdbc:" + getDatabaseID() + ":remote:" + host;        
-        
-        if ( db != null ) {
-            url += "/" + db; 
+
+        String url = "jdbc:" + getDatabaseID() + ":remote:" + host;
+
+        if (db != null) {
+            url += "/" + db;
         }
         return url;
     }
-    
+
     @Override
     public JDBCDataStore createDataStore(Map params)
-        throws IOException {
+            throws IOException {
         JDBCDataStore dataStore = super.createDataStore(params);
         dataStore.setCallbackFactory(new OrientDBCallBackFactory());
         return dataStore;

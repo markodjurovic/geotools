@@ -40,15 +40,14 @@ import org.opengis.filter.spatial.Within;
 
 import java.io.IOException;
 
-
-public class OrientDBSQLFilterToSQL extends FilterToSQL {   
+public class OrientDBSQLFilterToSQL extends FilterToSQL {
 
     public OrientDBSQLFilterToSQL() {
-        super();        
+        super();
     }
 
     @Override
-    protected FilterCapabilities createFilterCapabilities() {        
+    protected FilterCapabilities createFilterCapabilities() {
         FilterCapabilities caps = super.createFilterCapabilities();
         caps.addType(BBOX.class);
         caps.addType(Contains.class);
@@ -61,32 +60,35 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
         caps.addType(Within.class);
         caps.addType(Beyond.class);
 
-        
         return caps;
     }
-    
-    private static void clampLongitude(Coordinate coordinate){
-      if (coordinate.x > 180.)
-        coordinate.x = 180.;
-      if (coordinate.x < -180.)
-        coordinate.x = -180.;
+
+    private static void clampLongitude(Coordinate coordinate) {
+        if (coordinate.x > 180.) {
+            coordinate.x = 180.;
+        }
+        if (coordinate.x < -180.) {
+            coordinate.x = -180.;
+        }
     }
-    
-    private static void clampLattitude(Coordinate coordinate){
-      if (coordinate.y > 90.)
-        coordinate.y = 90.;
-      if (coordinate.y < -90.)
-        coordinate.y = -90.;
+
+    private static void clampLattitude(Coordinate coordinate) {
+        if (coordinate.y > 90.) {
+            coordinate.y = 90.;
+        }
+        if (coordinate.y < -90.) {
+            coordinate.y = -90.;
+        }
     }
-    
-    private static void clampCoordinates(Geometry g){
-      Coordinate[] coordinates = g.getCoordinates();
-      for (Coordinate coordinate : coordinates){
-        clampLongitude(coordinate);
-        clampLattitude(coordinate);
-      }
+
+    private static void clampCoordinates(Geometry g) {
+        Coordinate[] coordinates = g.getCoordinates();
+        for (Coordinate coordinate : coordinates) {
+            clampLongitude(coordinate);
+            clampLattitude(coordinate);
+        }
     }
-    
+
     @Override
     protected void visitLiteralGeometry(Literal expression) throws IOException {
         Geometry g = (Geometry) evaluateLiteral(expression, Geometry.class);
@@ -95,27 +97,26 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
             //WKT does not support linear rings
             g = g.getFactory().createLineString(((LinearRing) g).getCoordinateSequence());
         }
-        out.write( "ST_GeomFromText('" + g.toText() + "')");//+"', "+currentSRID+")");                
+        out.write("ST_GeomFromText('" + g.toText() + "')");//+"', "+currentSRID+")");                
     }
 
     @Override
     protected Object visitBinarySpatialOperator(BinarySpatialOperator filter,
             PropertyName property, Literal geometry, boolean swapped, Object extraData) {
-        
-      return visitBinarySpatialOperatorEnhanced(filter, (Expression) property, (Expression) geometry,
+
+        return visitBinarySpatialOperatorEnhanced(filter, (Expression) property, (Expression) geometry,
                 swapped, extraData);
     }
 
     @Override
     protected Object visitBinarySpatialOperator(BinarySpatialOperator filter, Expression e1,
-                                                Expression e2, Object extraData) {        
-      return visitBinarySpatialOperatorEnhanced(filter, e1, e2, false, extraData);        
-    }        
+            Expression e2, Object extraData) {
+        return visitBinarySpatialOperatorEnhanced(filter, e1, e2, false, extraData);
+    }
 
-    
     /**
      * supported if version of MySQL is at least 5.6.
-     * 
+     *
      * @param filter
      * @param e1
      * @param e2
@@ -124,7 +125,7 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
      * @return
      */
     protected Object visitBinarySpatialOperatorEnhanced(BinarySpatialOperator filter, Expression e1,
-                                                        Expression e2, boolean swapped, Object extraData) {
+            Expression e2, boolean swapped, Object extraData) {
 
         try {
 

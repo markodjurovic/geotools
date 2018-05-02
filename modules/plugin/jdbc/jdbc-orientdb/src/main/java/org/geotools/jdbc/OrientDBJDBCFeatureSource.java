@@ -31,46 +31,47 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  *
  * @author mdjurovi
  */
-public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
-  
-  class ColumnMetadataEx extends ColumnMetadata{
-    
-    private boolean embedded;
-    private String embeddedType;
+public class OrientDBJDBCFeatureSource extends JDBCFeatureSource {
 
-    public boolean isEmbedded() {
-      return embedded;
+    class ColumnMetadataEx extends ColumnMetadata {
+
+        private boolean embedded;
+        private String embeddedType;
+
+        public boolean isEmbedded() {
+            return embedded;
+        }
+
+        public void setEmbedded(boolean embedded) {
+            this.embedded = embedded;
+        }
+
+        public String getEmbeddedType() {
+            return embeddedType;
+        }
+
+        public void setEmbeddedType(String embeddedType) {
+            this.embeddedType = embeddedType;
+        }
+
     }
 
-    public void setEmbedded(boolean embedded) {
-      this.embedded = embedded;
+    public OrientDBJDBCFeatureSource(ContentEntry entry, Query query) throws IOException {
+        super(entry, query);
     }
 
-    public String getEmbeddedType() {
-      return embeddedType;
+    /**
+     * Copy existing feature source
+     *
+     * @param featureSource jdbc feature source
+     * @throws IOException
+     */
+    public OrientDBJDBCFeatureSource(JDBCFeatureSource featureSource) throws IOException {
+        super(featureSource);
     }
 
-    public void setEmbeddedType(String embeddedType) {
-      this.embeddedType = embeddedType;
-    }        
-    
-  }
-  
-  public OrientDBJDBCFeatureSource(ContentEntry entry,Query query) throws IOException {
-    super(entry,query);      
-  }
-    
-  /**
-   * Copy existing feature source
-   * @param featureSource jdbc feature source
-   * @throws IOException
-   */
-  public OrientDBJDBCFeatureSource(JDBCFeatureSource featureSource) throws IOException{
-      super(featureSource);
-  }
-  
-  @Override
-  protected List<ColumnMetadata> getColumnMetadata(Connection cx, String databaseSchema, String tableName, SQLDialect dialect)
+    @Override
+    protected List<ColumnMetadata> getColumnMetadata(Connection cx, String databaseSchema, String tableName, SQLDialect dialect)
             throws SQLException {
         List<ColumnMetadata> result = new ArrayList<>();
 
@@ -103,7 +104,7 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
                 getDataStore().escapeNamePattern(metaData, databaseSchema),
                 getDataStore().escapeNamePattern(metaData, tableName),
                 "%");
-        if(getDataStore().getFetchSize() > 0) {
+        if (getDataStore().getFetchSize() > 0) {
             columns.setFetchSize(getDataStore().getFetchSize());
         }
 
@@ -120,12 +121,12 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
                 String embeddedClass = columns.getString("EMBEDDED_TYPE");
                 column.setEmbedded(isEmbedded);
                 column.setEmbeddedType(embeddedClass);
-                
+
                 //support for user defined types, allow the dialect to handle them
                 if (column.getSqlType() == Types.DISTINCT) {
                     dialect.handleUserDefinedType(columns, column, cx);
                 }
-                
+
                 result.add(column);
             }
         } finally {
@@ -134,19 +135,19 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
 
         return result;
     }
-  
-  @Override
-  public SimpleFeatureType buildFeatureType() throws IOException {
+
+    @Override
+    public SimpleFeatureType buildFeatureType() throws IOException {
         //grab the primary key
         PrimaryKey pkey = getDataStore().getPrimaryKey(entry);
         VirtualTable virtualTable = getDataStore().getVirtualTables().get(entry.getTypeName());
-        
+
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         AttributeTypeBuilder ab = new AttributeTypeBuilder();
-        
+
         // setup the read only marker if no pk or null pk or it's a view
         boolean readOnly = false;
-        if(pkey == null || pkey instanceof NullPrimaryKey || virtualTable != null) {
+        if (pkey == null || pkey instanceof NullPrimaryKey || virtualTable != null) {
             readOnly = true;
         }
 
@@ -164,16 +165,15 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
 
         //grab the state
         JDBCState state = getState();
-        
+
         //grab the schema
         String databaseSchema = getDataStore().getDatabaseSchema();
 
         //ensure we have a connection
         Connection cx = getDataStore().getConnection(state);
-        
+
         // grab the dialect
         SQLDialect dialect = getDataStore().getSQLDialect();
-
 
         //get metadata about columns from database
         try {
@@ -187,14 +187,14 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
             }
 
             for (ColumnMetadata column_simple : columns) {
-                ColumnMetadataEx column = (ColumnMetadataEx)column_simple;
+                ColumnMetadataEx column = (ColumnMetadataEx) column_simple;
                 String name = column.getName();
 
                 //do not include primary key in the type if not exposing primary key columns
                 boolean pkColumn = false;
-                for ( PrimaryKeyColumn pkeycol : pkey.getColumns() ) {
-                    if ( name.equals( pkeycol.getName() ) ) {
-                        if ( !state.isExposePrimaryKeyColumns() ) {
+                for (PrimaryKeyColumn pkeycol : pkey.getColumns()) {
+                    if (name.equals(pkeycol.getName())) {
+                        if (!state.isExposePrimaryKeyColumns()) {
                             name = null;
                             break;
                         } else {
@@ -202,11 +202,11 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
                         }
                     }
                     // in views we don't know the pk type, grab it now
-                    if(pkeycol.getType() == null) {
+                    if (pkeycol.getType() == null) {
                         pkeycol.type = column.getBinding();
                     }
                 }
-             
+
                 if (name == null) {
                     continue;
                 }
@@ -218,19 +218,18 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
                     //check for an association
                     Statement st = null;
                     ResultSet relationships = null;
-                    if ( getDataStore().getSQLDialect() instanceof PreparedStatementSQLDialect ) {
+                    if (getDataStore().getSQLDialect() instanceof PreparedStatementSQLDialect) {
                         st = getDataStore().selectRelationshipSQLPS(tableName, name, cx);
-                        relationships = ((PreparedStatement)st).executeQuery();
-                    }
-                    else {
+                        relationships = ((PreparedStatement) st).executeQuery();
+                    } else {
                         String sql = getDataStore().selectRelationshipSQL(tableName, name);
                         getDataStore().getLogger().fine(sql);
-                        
+
                         st = cx.createStatement();
                         relationships = st.executeQuery(sql);
                     }
 
-                   try {
+                    try {
                         if (relationships.next()) {
                             //found, create a special mapping 
                             tb.add(name, Association.class);
@@ -241,7 +240,7 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
                         getDataStore().closeSafe(relationships);
                         getDataStore().closeSafe(st);
                     }
-                    
+
                 }
 
                 //first ask the dialect
@@ -256,19 +255,19 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
                     //determine from type mappings
                     binding = getDataStore().getMapping(column.getSqlType());
                 }
-                
-                if (binding == null && column.isEmbedded()){
+
+                if (binding == null && column.isEmbedded()) {
                     binding = getDataStore().getMapping(column.getEmbeddedType());
                 }
 
                 // if still not found, ignore the column we don't know about
                 if (binding == null) {
-                    getDataStore().getLogger().warning("Could not find mapping for '" + name 
+                    getDataStore().getLogger().warning("Could not find mapping for '" + name
                             + "', ignoring the column and setting the feature type read only");
-                	readOnly = true;
-                	continue;
+                    readOnly = true;
+                    continue;
                 }
-                
+
                 // store the native database type in the attribute descriptor user data
                 ab.addUserData(JDBCDataStore.JDBC_NATIVE_TYPENAME, column.getTypeName());
 
@@ -277,9 +276,9 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
                     ab.nillable(false);
                     ab.minOccurs(1);
                 }
-                
+
                 AttributeDescriptor att = null;
-                
+
                 //determine if this attribute is a geometry or not
                 if (Geometry.class.isAssignableFrom(binding)) {
                     //add the attribute as a geometry, try to figure out 
@@ -287,28 +286,29 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
                     Integer srid = null;
                     CoordinateReferenceSystem crs = null;
                     try {
-                        if(virtualTable != null) {
+                        if (virtualTable != null) {
                             srid = virtualTable.getNativeSrid(name);
                         } else {
                             srid = dialect.getGeometrySRID(databaseSchema, tableName, name, cx);
                         }
-                        if(srid != null)
+                        if (srid != null) {
                             crs = dialect.createCRS(srid, cx);
+                        }
                     } catch (Exception e) {
                         String msg = "Error occured determing srid for " + tableName + "."
-                            + name;
+                                + name;
                         getDataStore().getLogger().log(Level.WARNING, msg, e);
                     }
-                    
+
                     // compute the dimension too
                     int dimension = 2;
                     try {
-                        if(virtualTable != null) {
+                        if (virtualTable != null) {
                             dimension = virtualTable.getDimension(name);
                         } else {
                             dimension = dialect.getGeometryDimension(databaseSchema, tableName, name, cx);
                         }
-                    } catch(Exception e) {
+                    } catch (Exception e) {
                         String msg = "Error occured determing dimension for " + tableName + "."
                                 + name;
                         getDataStore().getLogger().log(Level.WARNING, msg, e);
@@ -317,7 +317,7 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
                     ab.setBinding(binding);
                     ab.setName(name);
                     ab.setCRS(crs);
-                    if(srid != null) {
+                    if (srid != null) {
                         ab.addUserData(JDBCDataStore.JDBC_NATIVE_SRID, srid);
                     }
                     ab.addUserData(Hints.COORDINATE_DIMENSION, dimension);
@@ -332,18 +332,18 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
                 if (pkey.getColumn(att.getLocalName()) != null) {
                     att.getUserData().put(JDBCDataStore.JDBC_PRIMARY_KEY_COLUMN, true);
                 }
-                
+
                 //call dialect callback
-                dialect.postCreateAttribute( att, tableName, databaseSchema, cx);
+                dialect.postCreateAttribute(att, tableName, databaseSchema, cx);
                 tb.add(att);
             }
 
             //build the final type
             SimpleFeatureType ft = tb.buildFeatureType();
-            
+
             // mark it as read only if necessary 
             // (the builder userData method affects attributes, not the ft itself)
-            if(readOnly) {
+            if (readOnly) {
                 ft.getUserData().put(JDBCDataStore.JDBC_READ_ONLY, Boolean.TRUE);
             }
 
@@ -354,7 +354,7 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource{
             String msg = "Error occurred building feature type";
             throw (IOException) new IOException(msg).initCause(e);
         } finally {
-            getDataStore().releaseConnection( cx, state );
+            getDataStore().releaseConnection(cx, state);
         }
     }
 }

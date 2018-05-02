@@ -52,7 +52,7 @@ import com.vividsolutions.jts.io.WKBReader;
 import java.util.HashMap;
 
 public class OrientDBSQLDialect extends SQLDialect {
-   
+
     protected Integer POINT = 2001;
     protected Integer LINESTRING = 2002;
     protected Integer POLYGON = 2003;
@@ -64,7 +64,7 @@ public class OrientDBSQLDialect extends SQLDialect {
 
     private Map<Class<?>, String> classesToSqlTypeNameMappings = null;
     private Map<Integer, Class<?>> sqlTypesToClasses = null;
-    
+
     public OrientDBSQLDialect(JDBCDataStore dataStore) {
         super(dataStore);
     }
@@ -72,24 +72,20 @@ public class OrientDBSQLDialect extends SQLDialect {
 //    public void setStorageEngine(String storageEngine) {
 //        this.storageEngine = storageEngine;
 //    }
-    
 //    public String getStorageEngine() {
 //        return storageEngine;
 //    }
-    
 //    public void setUsePreciseSpatialOps(boolean usePreciseSpatialOps) {
 //        this.usePreciseSpatialOps = usePreciseSpatialOps;
 //    }
-    
 //    public boolean getUsePreciseSpatialOps() {
 //        return usePreciseSpatialOps;
 //    }
-    
     @Override
     public void encodeCreateTable(StringBuffer sql) {
         sql.append("CREATE CLASS ");
     }
-    
+
     @Override
     public boolean includeTable(String schemaName, String tableName, Connection cx)
             throws SQLException {
@@ -98,7 +94,7 @@ public class OrientDBSQLDialect extends SQLDialect {
         }
         return super.includeTable(schemaName, tableName, cx);
     }
-    
+
     @Override
     public String getNameEscape() {
         return "";
@@ -106,16 +102,16 @@ public class OrientDBSQLDialect extends SQLDialect {
 
     @Override
     public String getGeometryTypeName(Integer type) {
-      if (sqlTypesToClasses == null){
-        registerSqlTypeToClassMappings(new HashMap<>());
-      }  
-      
-      Class<?> classType = sqlTypesToClasses.get(type);
-        if (classType != null){
-          String sqlTypeName = getSqlTypeNameForClass(classType);
-          if (sqlTypeName != null){
-            return sqlTypeName;
-          }
+        if (sqlTypesToClasses == null) {
+            registerSqlTypeToClassMappings(new HashMap<>());
+        }
+
+        Class<?> classType = sqlTypesToClasses.get(type);
+        if (classType != null) {
+            String sqlTypeName = getSqlTypeNameForClass(classType);
+            if (sqlTypeName != null) {
+                return sqlTypeName;
+            }
         }
 
         return super.getGeometryTypeName(type);
@@ -123,8 +119,8 @@ public class OrientDBSQLDialect extends SQLDialect {
 
     @Override
     public Integer getGeometrySRID(String schemaName, String tableName, String columnName,
-        Connection cx) throws SQLException {
-        
+            Connection cx) throws SQLException {
+
         //first check the geometry_columns table
         StringBuffer sql = new StringBuffer();
         sql.append("SELECT ");
@@ -132,25 +128,24 @@ public class OrientDBSQLDialect extends SQLDialect {
         sql.append(" FROM ");
         encodeTableName("geometry_columns", sql);
         sql.append(" WHERE ");
-        
+
         encodeColumnName(null, "f_table_schema", sql);
-        
+
         if (schemaName != null) {
-            sql.append( " = '").append(schemaName).append("'");
-        }
-        else {
+            sql.append(" = '").append(schemaName).append("'");
+        } else {
             sql.append(" IS NULL");
         }
         sql.append(" AND ");
-        
+
         encodeColumnName(null, "f_table_name", sql);
         sql.append(" = '").append(tableName).append("' AND ");
-        
+
         encodeColumnName(null, "f_geometry_column", sql);
         sql.append(" = '").append(columnName).append("'");
-        
+
         dataStore.getLogger().fine(sql.toString());
-        
+
         Statement st = cx.createStatement();
         try {
             ResultSet rs = st.executeQuery(sql.toString());
@@ -158,18 +153,15 @@ public class OrientDBSQLDialect extends SQLDialect {
                 if (rs.next()) {
                     return new Integer(rs.getInt(1));
                 }
-            }
-            finally {
+            } finally {
                 dataStore.closeSafe(rs);
             }
-        }
-        catch(SQLException e) {
+        } catch (SQLException e) {
             //geometry_columns does not exist
-        }
-        finally {
+        } finally {
             dataStore.closeSafe(st);
         }
-        
+
         //execute SELECT srid(<columnName>) FROM <tableName> LIMIT 1;
         sql = new StringBuffer();
         sql.append("SELECT srid(");
@@ -226,7 +218,7 @@ public class OrientDBSQLDialect extends SQLDialect {
 
     @Override
     public Envelope decodeGeometryEnvelope(ResultSet rs, int column,
-                Connection cx) throws SQLException, IOException {
+            Connection cx) throws SQLException, IOException {
         //String wkb = rs.getString( column );
         byte[] wkb = rs.getBytes(column);
 
@@ -243,9 +235,9 @@ public class OrientDBSQLDialect extends SQLDialect {
 
     @Override
     public Geometry decodeGeometryValue(GeometryDescriptor descriptor, ResultSet rs, String name,
-                                        GeometryFactory factory, Connection cx, Hints hints) throws IOException, SQLException {
+            GeometryFactory factory, Connection cx, Hints hints) throws IOException, SQLException {
         byte[] bytes = rs.getBytes(name);
-        if ( bytes == null ) {
+        if (bytes == null) {
             return null;
         }
         try {
@@ -282,7 +274,7 @@ public class OrientDBSQLDialect extends SQLDialect {
         mappings.put(MULTIPOLYGON, MultiPolygon.class);
         mappings.put(GEOMETRY, Geometry.class);
         mappings.put(GEOMETRY_COLLECTION, GeometryCollection.class);
-        
+
         sqlTypesToClasses = mappings;
     }
 
@@ -299,108 +291,107 @@ public class OrientDBSQLDialect extends SQLDialect {
         mappings.put("OGeometry", Geometry.class);
         mappings.put("OGeometryCollection", GeometryCollection.class);
     }
-        
+
     @Override
     public void registerSqlTypeToSqlTypeNameOverrides(
             Map<Integer, String> overrides) {
-        overrides.put( Types.BOOLEAN, "BOOL");
+        overrides.put(Types.BOOLEAN, "BOOL");
     }
-    
+
     //reverse of registerSqlTypeNameToClassMappings
-    private void registerClassToSqlTypeName(){
-      if (classesToSqlTypeNameMappings == null){
-        classesToSqlTypeNameMappings = new HashMap<>();
-      }
-      else{
-        return;
-      }
-      
-      classesToSqlTypeNameMappings.put(Point.class, "OPoint");
-      classesToSqlTypeNameMappings.put(LineString.class, "OLineString");
-      classesToSqlTypeNameMappings.put(Polygon.class, "OPolygon");
-      classesToSqlTypeNameMappings.put(MultiPoint.class, "OMultiPoint");
-      classesToSqlTypeNameMappings.put(MultiLineString.class, "OMultiLineString");
-      classesToSqlTypeNameMappings.put(MultiPolygon.class, "OMultiPolygon");
-      classesToSqlTypeNameMappings.put(Geometry.class, "OGeometry");
-      classesToSqlTypeNameMappings.put(GeometryCollection.class, "OGeometryCollection");
+    private void registerClassToSqlTypeName() {
+        if (classesToSqlTypeNameMappings == null) {
+            classesToSqlTypeNameMappings = new HashMap<>();
+        } else {
+            return;
+        }
+
+        classesToSqlTypeNameMappings.put(Point.class, "OPoint");
+        classesToSqlTypeNameMappings.put(LineString.class, "OLineString");
+        classesToSqlTypeNameMappings.put(Polygon.class, "OPolygon");
+        classesToSqlTypeNameMappings.put(MultiPoint.class, "OMultiPoint");
+        classesToSqlTypeNameMappings.put(MultiLineString.class, "OMultiLineString");
+        classesToSqlTypeNameMappings.put(MultiPolygon.class, "OMultiPolygon");
+        classesToSqlTypeNameMappings.put(Geometry.class, "OGeometry");
+        classesToSqlTypeNameMappings.put(GeometryCollection.class, "OGeometryCollection");
     }
-    
-    public String getSqlTypeNameForClass(Class<?> classType){
-      if (classesToSqlTypeNameMappings == null)
-        registerClassToSqlTypeName();
-      return classesToSqlTypeNameMappings.get(classType);
+
+    public String getSqlTypeNameForClass(Class<?> classType) {
+        if (classesToSqlTypeNameMappings == null) {
+            registerClassToSqlTypeName();
+        }
+        return classesToSqlTypeNameMappings.get(classType);
     }
-    
+
     @Override
-    public void encodePostCreateTable(String tableName, StringBuffer sql) {        
+    public void encodePostCreateTable(String tableName, StringBuffer sql) {
     }
-    
+
     @Override
     public void encodePostColumnCreateTable(AttributeDescriptor att, StringBuffer sql) {
         //make geometry columns non null in order to be able to index them
         if (att instanceof GeometryDescriptor && !att.isNillable()) {
-        	if (!sql.toString().trim().endsWith(" NOT NULL")) {
-        		sql.append( " NOT NULL");
-        	}
+            if (!sql.toString().trim().endsWith(" NOT NULL")) {
+                sql.append(" NOT NULL");
+            }
         }
     }
-    
+
     @Override
     public void postCreateTable(String schemaName, SimpleFeatureType featureType, Connection cx)
             throws SQLException, IOException {
-        
+
         //create teh geometry_columns table if necessary
         DatabaseMetaData md = cx.getMetaData();
         ResultSet rs = md.getTables(null, dataStore.escapeNamePattern(md, schemaName),
                 dataStore.escapeNamePattern(md, "geometry_columns"), new String[]{"TABLE"});
-        
+
         try {
             if (!rs.next()) {
                 //create it
                 Statement st = cx.createStatement();
                 try {
                     StringBuffer sql = new StringBuffer("CREATE CLASS ");
-                    encodeTableName("geometry_columns", sql);                   
-                    if (LOGGER.isLoggable(Level.FINE)) { LOGGER.fine(sql.toString()); }
-                    st.execute(sql.toString());                   
-                }
-                finally {
+                    encodeTableName("geometry_columns", sql);
+                    if (LOGGER.isLoggable(Level.FINE)) {
+                        LOGGER.fine(sql.toString());
+                    }
+                    st.execute(sql.toString());
+                } finally {
                     dataStore.closeSafe(st);
                 }
             }
-        }
-        finally {
+        } finally {
             dataStore.closeSafe(rs);
-        }                
-        
+        }
+
         //create spatial index for all geometry columns
         for (AttributeDescriptor ad : featureType.getAttributeDescriptors()) {
             if (!(ad instanceof GeometryDescriptor)) {
                 continue;
             }
-            GeometryDescriptor gd = (GeometryDescriptor) ad;                        
+            GeometryDescriptor gd = (GeometryDescriptor) ad;
             Class type = gd.getType().getBinding();
             String typeStr = getSqlTypeNameForClass(type);
             String className = featureType.getTypeName();
-            
+
             //create properties
             {
-              Statement statement = cx.createStatement();
-              StringBuffer sql = new StringBuffer("CREATE PROPERTY ");
-              encodeTableName(className, sql);
-              sql.append(".");
-              encodeColumnName(null, gd.getLocalName(), sql);
-              sql.append(" EMBEDDED ");
-              sql.append(typeStr);
-              try{
-                statement.execute(sql.toString());
-              }
-              finally{
-                dataStore.closeSafe(statement);
-              }
+                Statement statement = cx.createStatement();
+                StringBuffer sql = new StringBuffer("CREATE PROPERTY ");
+                encodeTableName(className, sql);
+                sql.append(".");
+                encodeColumnName(null, gd.getLocalName(), sql);
+                sql.append(" EMBEDDED ");
+                sql.append(typeStr);
+                try {
+                    statement.execute(sql.toString());
+                } finally {
+                    dataStore.closeSafe(statement);
+                }
             }
-            
-            if (true){//(!ad.isNillable()) {
+
+            if (true) {//(!ad.isNillable()) {
                 //can only index non null columns
                 StringBuffer sql = new StringBuffer("CREATE INDEX ");
                 encodeTableName(featureType.getTypeName(), sql);
@@ -411,17 +402,16 @@ public class OrientDBSQLDialect extends SQLDialect {
                 sql.append(" (");
                 encodeColumnName(null, gd.getLocalName(), sql);
                 sql.append(") SPATIAL ENGINE LUCENE");
-                
-                LOGGER.fine( sql.toString() );
+
+                LOGGER.fine(sql.toString());
                 Statement st = cx.createStatement();
                 try {
                     st.execute(sql.toString());
-                }
-                finally {
+                } finally {
                     dataStore.closeSafe(st);
                 }
             }
-            
+
             CoordinateReferenceSystem crs = gd.getCoordinateReferenceSystem();
             int srid = -1;
             if (crs != null) {
@@ -433,64 +423,65 @@ public class OrientDBSQLDialect extends SQLDialect {
                 }
                 srid = i != null ? i : srid;
             }
-            
+
             StringBuffer sql = new StringBuffer("INSERT INTO ");
             encodeTableName("geometry_columns", sql);
             sql.append(" (");
-            encodeColumnName(null, "f_table_schema", sql); sql.append(", ");
-            encodeColumnName(null, "f_table_name", sql); sql.append(", ");
-            encodeColumnName(null, "f_geometry_column", sql); sql.append(", ");
-            encodeColumnName(null, "coord_dimension", sql); sql.append(", ");
-            encodeColumnName(null, "srid", sql); sql.append(", ");
+            encodeColumnName(null, "f_table_schema", sql);
+            sql.append(", ");
+            encodeColumnName(null, "f_table_name", sql);
+            sql.append(", ");
+            encodeColumnName(null, "f_geometry_column", sql);
+            sql.append(", ");
+            encodeColumnName(null, "coord_dimension", sql);
+            sql.append(", ");
+            encodeColumnName(null, "srid", sql);
+            sql.append(", ");
             encodeColumnName(null, "type", sql);
             sql.append(") ");
             sql.append(" VALUES (");
-            sql.append(schemaName != null ? "'"+schemaName+"'" : "NULL").append(", ");
+            sql.append(schemaName != null ? "'" + schemaName + "'" : "NULL").append(", ");
             sql.append("'").append(featureType.getTypeName()).append("', ");
             sql.append("'").append(ad.getLocalName()).append("', ");
             sql.append("2, ");
             sql.append(srid).append(", ");
-            
-            
+
             Geometries g = Geometries.getForBinding((Class<? extends Geometry>) gd.getType().getBinding());
             sql.append("'").append(g != null ? g.getName().toUpperCase() : "GEOMETRY").append("')");
-            
-            LOGGER.fine( sql.toString() );
+
+            LOGGER.fine(sql.toString());
             Statement st = cx.createStatement();
             try {
                 st.execute(sql.toString());
-            }
-            finally {
+            } finally {
                 dataStore.closeSafe(st);
             }
         }
-        
-    }    
+
+    }
 
     @Override
     public boolean lookupGeneratedValuesPostInsert() {
         return true;
     }
-    
+
     @Override
     public Object getLastAutoGeneratedValue(String schemaName, String tableName, String columnName,
             Connection cx) throws SQLException {
         Statement st = cx.createStatement();
         try {
             String sql = "SELECT last_insert_id()";
-            dataStore.getLogger().fine( sql);
-            
-            ResultSet rs = st.executeQuery( sql);
+            dataStore.getLogger().fine(sql);
+
+            ResultSet rs = st.executeQuery(sql);
             try {
-                if ( rs.next() ) {
+                if (rs.next()) {
                     return rs.getLong(1);
                 }
-            } 
-            finally {
+            } finally {
                 dataStore.closeSafe(rs);
             }
-        }
-        finally {
+        } finally {
             dataStore.closeSafe(st);
         }
 
@@ -501,16 +492,16 @@ public class OrientDBSQLDialect extends SQLDialect {
     public boolean isLimitOffsetSupported() {
         return true;
     }
-    
+
     @Override
-    public void applyLimitOffset(StringBuffer sql, int limit, int offset) {        
-      if(offset > 0)
-        sql.append(" SKIP ").append(offset).append(" LIMIT ").append(limit);
-      else 
-        sql.append(" LIMIT ").append(limit);        
+    public void applyLimitOffset(StringBuffer sql, int limit, int offset) {
+        if (offset > 0) {
+            sql.append(" SKIP ").append(offset).append(" LIMIT ").append(limit);
+        } else {
+            sql.append(" LIMIT ").append(limit);
+        }
     }
 
-    
     @Override
     public void dropIndex(Connection cx, SimpleFeatureType schema, String databaseSchema,
             String indexName) throws SQLException {
@@ -534,7 +525,7 @@ public class OrientDBSQLDialect extends SQLDialect {
         try {
             st = cx.createStatement();
             st.execute(sql.toString());
-            if(!cx.getAutoCommit()) {
+            if (!cx.getAutoCommit()) {
                 cx.commit();
             }
         } finally {

@@ -13,16 +13,16 @@ import org.geotools.jdbc.JDBCReaderCallback;
  *
  * @author marko
  */
-public class OrientDBCallBackFactory implements JDBCCallbackFactory{
+public class OrientDBCallBackFactory implements JDBCCallbackFactory {
 
-  @Override
-  public String getName() {
-    return "OrientDB callback factory";
-  }
+    @Override
+    public String getName() {
+        return "OrientDB callback factory";
+    }
 
-  @Override
-  public JDBCReaderCallback createReaderCallback() {
-    return new OrientDBreaderCallback();
-  }
-  
+    @Override
+    public JDBCReaderCallback createReaderCallback() {
+        return new OrientDBreaderCallback();
+    }
+
 }

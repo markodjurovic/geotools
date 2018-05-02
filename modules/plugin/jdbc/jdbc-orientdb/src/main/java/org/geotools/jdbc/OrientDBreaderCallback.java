@@ -11,18 +11,17 @@ import java.sql.SQLException;
  *
  * @author marko
  */
-public class OrientDBreaderCallback implements JDBCReaderCallback{
-  
+public class OrientDBreaderCallback implements JDBCReaderCallback {
+
     @Override
     public void finish(JDBCFeatureReader reader) {
-        if (reader.rs != null){
-            try{
+        if (reader.rs != null) {
+            try {
                 reader.rs.close();
-            }
-            catch (SQLException exc){
+            } catch (SQLException exc) {
                 throw new RuntimeException(exc);
             }
         }
     }
-  
+
 }

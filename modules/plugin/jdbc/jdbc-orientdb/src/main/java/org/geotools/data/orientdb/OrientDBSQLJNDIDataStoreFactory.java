@@ -16,20 +16,18 @@
  */
 package org.geotools.data.orientdb;
 
-
 import java.util.Map;
 
 import org.geotools.jdbc.JDBCJNDIDataStoreFactory;
-
 
 public class OrientDBSQLJNDIDataStoreFactory extends JDBCJNDIDataStoreFactory {
 
     public OrientDBSQLJNDIDataStoreFactory() {
         super(new OrientDBDataStoreFactory());
     }
-    
+
     @Override
     protected void setupParameters(Map parameters) {
-        super.setupParameters(parameters);        
+        super.setupParameters(parameters);
     }
 }
