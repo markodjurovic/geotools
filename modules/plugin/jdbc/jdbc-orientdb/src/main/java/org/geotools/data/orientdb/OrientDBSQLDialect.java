@@ -291,11 +291,11 @@ public class OrientDBSQLDialect extends SQLDialect {
         super.registerSqlTypeNameToClassMappings(mappings);
 
         mappings.put("OPoint", Point.class);
-        mappings.put("OLine", LineString.class);
+        mappings.put("OLineString", LineString.class);
         mappings.put("OPolygon", Polygon.class);
         mappings.put("OMultiPoint", MultiPoint.class);
-        mappings.put("OMultiline", MultiLineString.class);
-        mappings.put("OMultiPlygon", MultiPolygon.class);
+        mappings.put("OMultiLineString", MultiLineString.class);
+        mappings.put("OMultiPolygon", MultiPolygon.class);
         mappings.put("OGeometry", Geometry.class);
         mappings.put("OGeometryCollection", GeometryCollection.class);
     }
@@ -316,11 +316,11 @@ public class OrientDBSQLDialect extends SQLDialect {
       }
       
       classesToSqlTypeNameMappings.put(Point.class, "OPoint");
-      classesToSqlTypeNameMappings.put(LineString.class, "OLine");
+      classesToSqlTypeNameMappings.put(LineString.class, "OLineString");
       classesToSqlTypeNameMappings.put(Polygon.class, "OPolygon");
       classesToSqlTypeNameMappings.put(MultiPoint.class, "OMultiPoint");
-      classesToSqlTypeNameMappings.put(MultiLineString.class, "OMultiline");
-      classesToSqlTypeNameMappings.put(MultiPolygon.class, "OMultiPlygon");
+      classesToSqlTypeNameMappings.put(MultiLineString.class, "OMultiLineString");
+      classesToSqlTypeNameMappings.put(MultiPolygon.class, "OMultiPolygon");
       classesToSqlTypeNameMappings.put(Geometry.class, "OGeometry");
       classesToSqlTypeNameMappings.put(GeometryCollection.class, "OGeometryCollection");
     }
