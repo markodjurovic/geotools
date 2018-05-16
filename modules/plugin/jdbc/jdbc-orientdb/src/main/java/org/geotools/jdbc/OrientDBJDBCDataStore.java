@@ -107,6 +107,14 @@ public class OrientDBJDBCDataStore extends JDBCDataStore {
         return sql.toString();
     }
 
+    /**
+     * same as selectSQL from JDBCDataStore but select columns is different 
+     * @param featureType
+     * @param query
+     * @return
+     * @throws IOException
+     * @throws SQLException 
+     */
     protected String selectSQLClean(SimpleFeatureType featureType, Query query) throws IOException, SQLException {
         StringBuffer sql = new StringBuffer();
         sql.append("SELECT ");
@@ -150,6 +158,14 @@ public class OrientDBJDBCDataStore extends JDBCDataStore {
         dialect.handleSelectHints(sql, featureType, query);
     }
 
+    /**
+     * Same as selectColumns from JDBCDataStore but geometry columns are not encoded in special way
+     * @param featureType
+     * @param prefix
+     * @param query
+     * @param sql
+     * @throws IOException 
+     */
     void selectColumnsClean(SimpleFeatureType featureType, String prefix, Query query, StringBuffer sql)
             throws IOException {
 

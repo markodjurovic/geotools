@@ -28,7 +28,6 @@ import org.opengis.filter.spatial.BBOX;
 import org.opengis.filter.spatial.Beyond;
 import org.opengis.filter.spatial.BinarySpatialOperator;
 import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
 import org.opengis.filter.spatial.DWithin;
 import org.opengis.filter.spatial.Disjoint;
 import org.opengis.filter.spatial.DistanceBufferOperator;
@@ -154,8 +153,8 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
 
                 if (filter instanceof Contains) {
                     out.write("ST_Contains(");
-                } else if (filter instanceof Crosses) {
-                    out.write("ST_Crosses(");
+//                } else if (filter instanceof Crosses) {
+//                    out.write("ST_Crosses(");
                 } else if (filter instanceof Disjoint) {
                     out.write("ST_Disjoint(");
                 } else if (filter instanceof Equals) {
@@ -163,9 +162,9 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
                 } else if (filter instanceof Intersects) {
                     out.write("ST_Intersects(");
                 } else if (filter instanceof Overlaps) {
-                    out.write("ST_Overlaps(");
-                } else if (filter instanceof Touches) {
-                    out.write("ST_Touches(");
+                    out.write("ST_Intersects(");
+//                } else if (filter instanceof Touches) {
+//                    out.write("ST_Touches(");
                 } else if (filter instanceof Within) {
                     out.write("ST_Within(");
                 } else {
@@ -183,6 +182,21 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
                 }
 
                 out.write(")");
+                
+                //post action for overlap for overlap, neither A should contain B, neither B should contain A
+                if (filter instanceof Overlaps){
+                  out.write(" AND NOT ST_Within(");
+                  e1.accept(this, extraData);
+                  out.write(", ");
+                  e2.accept(this, extraData);
+                  out.write(")");
+                  
+                  out.write(" AND NOT ST_Within(");
+                  e2.accept(this, extraData);
+                  out.write(", ");
+                  e1.accept(this, extraData);
+                  out.write(")");
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
