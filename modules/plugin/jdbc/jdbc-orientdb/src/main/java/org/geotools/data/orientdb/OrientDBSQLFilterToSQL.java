@@ -150,7 +150,8 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
                 e2.accept(this, extraData);
                 out.write(") = true");
             } else {
-
+                boolean equalsTrueNecessary = true;
+              
                 if (filter instanceof Contains) {
                     out.write("ST_Contains(");
 //                } else if (filter instanceof Crosses) {
@@ -182,6 +183,9 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
                 }
 
                 out.write(")");
+                if (equalsTrueNecessary){
+                  out.write(" = true");
+                }
                 
                 //post action for overlap for overlap, neither A should contain B, neither B should contain A
                 if (filter instanceof Overlaps){
