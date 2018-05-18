@@ -163,7 +163,7 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
                 } else if (filter instanceof Intersects) {
                     out.write("ST_Intersects(");
                 } else if (filter instanceof Overlaps) {
-                    out.write("ST_Intersects(");
+                    out.write("ST_Overlaps(");
 //                } else if (filter instanceof Touches) {
 //                    out.write("ST_Touches(");
                 } else if (filter instanceof Within) {
@@ -186,21 +186,7 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
                 if (equalsTrueNecessary){
                   out.write(" = true");
                 }
-                
-                //post action for overlap for overlap, neither A should contain B, neither B should contain A
-                if (filter instanceof Overlaps){
-                  out.write(" AND NOT ST_Within(");
-                  e1.accept(this, extraData);
-                  out.write(", ");
-                  e2.accept(this, extraData);
-                  out.write(")");
-                  
-                  out.write(" AND NOT ST_Within(");
-                  e2.accept(this, extraData);
-                  out.write(", ");
-                  e1.accept(this, extraData);
-                  out.write(")");
-                }
+                                
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
