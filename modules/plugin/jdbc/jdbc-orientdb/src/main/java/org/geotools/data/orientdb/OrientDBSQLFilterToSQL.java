@@ -155,8 +155,8 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
               
                 if (filter instanceof Contains) {
                     out.write("ST_Contains(");
-                } else if (filter instanceof Crosses) {
-                    out.write("ST_Crosses(");
+//                } else if (filter instanceof Crosses) {
+//                    out.write("ST_Crosses(");
                 } else if (filter instanceof Disjoint) {
                     out.write("ST_Disjoint(");
                 } else if (filter instanceof Equals) {
@@ -165,8 +165,8 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
                     out.write("ST_Intersects(");
                 } else if (filter instanceof Overlaps) {
                     out.write("ST_Overlaps(");
-                } else if (filter instanceof Touches) {                  
-                    out.write("ST_Touches(");
+//                } else if (filter instanceof Touches) {                  
+//                    out.write("ST_Touches(");
                 } else if (filter instanceof Within) {
                     out.write("ST_Within(");
                 } else {
