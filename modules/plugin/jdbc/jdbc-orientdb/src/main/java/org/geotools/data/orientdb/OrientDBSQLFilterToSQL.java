@@ -115,7 +115,6 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
     }
 
     /**
-     * supported if version of MySQL is at least 5.6.
      *
      * @param filter
      * @param e1

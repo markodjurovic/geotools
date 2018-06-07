@@ -194,14 +194,6 @@ public class OrientDBSQLDialectBasic extends BasicSQLDialect {
         byte[] wkb = rs.getBytes(column);
 
         try {
-            /**
-             * As of MySQL 5.7.6, if the argument is a point or a vertical or
-             * horizontal line segment, ST_Envelope() returns the point or the
-             * line segment as its MBR rather than returning an invalid polygon
-             * therefore we must override behavior and check for a geometry and
-             * not a polygon
-             */
-            //TODO: srid
             Geometry geom = (Geometry) new WKBReader().read(wkb);
 
             return geom.getEnvelopeInternal();
