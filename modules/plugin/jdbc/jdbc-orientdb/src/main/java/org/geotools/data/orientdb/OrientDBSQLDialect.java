@@ -151,7 +151,7 @@ public class OrientDBSQLDialect extends SQLDialect {
             ResultSet rs = st.executeQuery(sql.toString());
             try {
                 if (rs.next()) {
-                    return new Integer(rs.getInt(1));
+                    return rs.getInt(1);
                 }
             } finally {
                 dataStore.closeSafe(rs);
@@ -187,7 +187,7 @@ public class OrientDBSQLDialect extends SQLDialect {
 
             try {
                 if (rs.next()) {
-                    return new Integer(rs.getInt(1));
+                    return rs.getInt(1);
                 } else {
                     //could not find out
                     return null;

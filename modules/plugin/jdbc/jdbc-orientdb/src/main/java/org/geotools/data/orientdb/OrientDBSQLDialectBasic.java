@@ -155,7 +155,7 @@ public class OrientDBSQLDialectBasic extends BasicSQLDialect {
         if (value != null) {
             sql.append("ST_GeomFromText('");
             sql.append(new WKTWriter().write(value));
-            sql.append("'").append(")");
+            sql.append("', ").append(srid).append(")");
         } else {
             sql.append("NULL");
         }
