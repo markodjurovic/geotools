@@ -11,6 +11,7 @@ import java.sql.SQLException;
  *
  * @author marko
  */
+//explicitly close reader at the end, to release resources
 public class OrientDBreaderCallback implements JDBCReaderCallback {
 
     @Override

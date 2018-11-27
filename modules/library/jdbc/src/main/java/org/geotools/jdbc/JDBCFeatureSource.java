@@ -161,6 +161,7 @@ public class JDBCFeatureSource extends ContentFeatureSource {
     /**
      * Builds the feature type from database metadata.
      */
+    @Override
     protected SimpleFeatureType buildFeatureType() throws IOException {
         //grab the primary key
         PrimaryKey pkey = getDataStore().getPrimaryKey(entry);

@@ -38,7 +38,6 @@ import org.opengis.filter.spatial.Touches;
 import org.opengis.filter.spatial.Within;
 
 import java.io.IOException;
-import org.opengis.filter.spatial.Crosses;
 
 public class OrientDBSQLFilterToSQL extends FilterToSQL {
 

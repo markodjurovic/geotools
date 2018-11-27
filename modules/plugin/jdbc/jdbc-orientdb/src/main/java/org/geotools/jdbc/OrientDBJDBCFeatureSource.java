@@ -31,6 +31,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  *
  * @author mdjurovi
  */
+//derived class to handle embedded fields types from OrientDB
 public class OrientDBJDBCFeatureSource extends JDBCFeatureSource {
 
     class ColumnMetadataEx extends ColumnMetadata {
@@ -136,6 +137,7 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource {
         return result;
     }
 
+    //same as from JDBFeatureSource, but dealing with ColumnMetadataEx, which contains info about embedded fields types from ODB
     @Override
     public SimpleFeatureType buildFeatureType() throws IOException {
         //grab the primary key

@@ -45,6 +45,7 @@ public class OrientDBJDBCDataStore extends JDBCDataStore {
 
     public OrientDBJDBCDataStore(JDBCDataStore dataStore) {
         super();
+        //copy values from parameter datastore
         Field[] fields = getAllFields();
         for (Field field : fields) {
             if (field.isSynthetic() || Modifier.isStatic(field.getModifiers())) {
@@ -212,6 +213,7 @@ public class OrientDBJDBCDataStore extends JDBCDataStore {
         }
     }
 
+    //same as from JDBCDataStor but no dealing with primary keys at the end
     @Override
     protected String insertSQL(SimpleFeatureType featureType, SimpleFeature feature,
             KeysFetcher keysFetcher, Connection cx) throws SQLException, IOException {
