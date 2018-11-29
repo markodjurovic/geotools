@@ -1341,7 +1341,7 @@ public class JDBCDataStore extends ContentDataStore
                 st = selectBoundsSQLPS(featureType, query, cx);
                 rs = ((PreparedStatement) st).executeQuery();
             } else {
-                String sql = selectBoundsSQL(featureType, query);
+                String sql = selectBoundsSQL(featureType, query, cx);
                 LOGGER.log(Level.FINE, "Retriving bounding box: {0}", sql);
 
                 st = cx.createStatement();
@@ -3694,7 +3694,7 @@ public class JDBCDataStore extends ContentDataStore
      * @param query Specifies which features are to be used for the bounds computation
      *              (and in particular uses filter, start index and max features)
      */
-    protected String selectBoundsSQL(SimpleFeatureType featureType, Query query) throws SQLException {
+    protected String selectBoundsSQL(SimpleFeatureType featureType, Query query, Connection cx) throws SQLException {
         StringBuffer sql = new StringBuffer();
 
         boolean offsetLimit = checkLimitOffset(query.getStartIndex(), query.getMaxFeatures());
@@ -3704,7 +3704,7 @@ public class JDBCDataStore extends ContentDataStore
             sql.append(" SELECT *");
         } else {
             sql.append("SELECT ");
-            buildEnvelopeAggregates(featureType, sql);
+            buildEnvelopeAggregates(featureType, sql, cx);
         }
 
         sql.append(" FROM ");
@@ -3727,7 +3727,7 @@ public class JDBCDataStore extends ContentDataStore
             // build the prologue
             StringBuffer sb = new StringBuffer();
             sb.append("SELECT ");
-            buildEnvelopeAggregates(featureType, sb);
+            buildEnvelopeAggregates(featureType, sb, cx);
             sb.append("FROM (");
             // wrap the existing query
             sql.insert(0, sb.toString());
@@ -3761,7 +3761,7 @@ public class JDBCDataStore extends ContentDataStore
             sql.append(" SELECT *");
         } else {
             sql.append("SELECT ");
-            buildEnvelopeAggregates(featureType, sql);
+            buildEnvelopeAggregates(featureType, sql, cx);
         }
 
         sql.append(" FROM ");
@@ -3786,7 +3786,7 @@ public class JDBCDataStore extends ContentDataStore
             // build the prologue
             StringBuffer sb = new StringBuffer();
             sb.append("SELECT ");
-            buildEnvelopeAggregates(featureType, sb);
+            buildEnvelopeAggregates(featureType, sb, cx);
             sb.append("FROM (");
             // wrap the existing query
             sql.insert(0, sb.toString());
@@ -3813,7 +3813,7 @@ public class JDBCDataStore extends ContentDataStore
      * @param featureType
      * @param sql
      */
-    void buildEnvelopeAggregates(SimpleFeatureType featureType, StringBuffer sql) {
+    protected void buildEnvelopeAggregates(SimpleFeatureType featureType, StringBuffer sql, Connection cx) {
         //walk through all geometry attributes and build the query
         for (Iterator a = featureType.getAttributeDescriptors().iterator(); a.hasNext();) {
             AttributeDescriptor attribute = (AttributeDescriptor) a.next();

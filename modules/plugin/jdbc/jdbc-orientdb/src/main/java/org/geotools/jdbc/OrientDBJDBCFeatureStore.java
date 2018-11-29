@@ -253,6 +253,7 @@ public final class OrientDBJDBCFeatureStore extends ContentFeatureStore {
 //     JDBCFeatureCollection features = (JDBCFeatureCollection) filtered(getState(), filter);
 //     features.update(type, value);
 // }
+    @Override
     protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(Query query, int flags)
             throws IOException {
 

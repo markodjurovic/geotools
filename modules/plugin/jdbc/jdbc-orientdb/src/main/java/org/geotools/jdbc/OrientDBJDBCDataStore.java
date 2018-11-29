@@ -13,16 +13,19 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import org.geotools.data.Query;
 import org.geotools.data.Transaction;
+import org.geotools.data.orientdb.OrientDBSQLDialect;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
 import static org.geotools.jdbc.JDBCDataStore.getColumnNames;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
+import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.filter.Filter;
 
 /**
@@ -287,6 +290,28 @@ public class OrientDBJDBCDataStore extends JDBCDataStore {
         sql.append(")");
 
         return sql.toString();
+    }
+    
+    @Override
+    protected void buildEnvelopeAggregates(SimpleFeatureType featureType, StringBuffer sql, Connection cx) {
+        //walk through all geometry attributes and build the query
+        for (Iterator a = featureType.getAttributeDescriptors().iterator(); a.hasNext();) {
+            AttributeDescriptor attribute = (AttributeDescriptor) a.next();
+            if (attribute instanceof GeometryDescriptor) {
+                String geometryColumn = attribute.getLocalName();
+                if (dialect instanceof OrientDBSQLDialect){
+                  OrientDBSQLDialect orientdbSQLDialect = (OrientDBSQLDialect)dialect;
+                  orientdbSQLDialect.setCurrentConnection(cx);
+                }
+                dialect.encodeGeometryEnvelope(featureType.getTypeName(), geometryColumn, sql);
+                if (dialect instanceof OrientDBSQLDialect){
+                  OrientDBSQLDialect orientdbSQLDialect = (OrientDBSQLDialect)dialect;
+                  orientdbSQLDialect.setCurrentConnection(null);
+                }
+                sql.append(",");
+            }
+        }
+        sql.setLength(sql.length() - 1);
     }
 
 }

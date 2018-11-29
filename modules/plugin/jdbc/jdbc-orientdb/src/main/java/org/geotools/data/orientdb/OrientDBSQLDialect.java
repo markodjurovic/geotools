@@ -65,8 +65,14 @@ public class OrientDBSQLDialect extends SQLDialect {
     private Map<Class<?>, String> classesToSqlTypeNameMappings = null;
     private Map<Integer, Class<?>> sqlTypesToClasses = null;
 
+    protected Connection currentConnection = null;
+    
     public OrientDBSQLDialect(JDBCDataStore dataStore) {
         super(dataStore);
+    }
+    
+    public void setCurrentConnection(Connection cx){
+      currentConnection = cx;      
     }
 
 //    public void setStorageEngine(String storageEngine) {
@@ -120,7 +126,10 @@ public class OrientDBSQLDialect extends SQLDialect {
     @Override
     public Integer getGeometrySRID(String schemaName, String tableName, String columnName,
             Connection cx) throws SQLException {
-
+        if (cx == null){
+          return null;
+        }
+      
         //first check the geometry_columns table
         StringBuffer sql = new StringBuffer();
         sql.append("SELECT ");
@@ -205,21 +214,30 @@ public class OrientDBSQLDialect extends SQLDialect {
             int srid, Hints hints, StringBuffer sql) {
         sql.append("ST_AsBinary(");
         encodeColumnName(prefix, gatt.getLocalName(), sql);
+        sql.append(", ").append(srid).append(")");
+    }
+
+    @Override
+    public void encodeGeometryEnvelope(String tableName, String geometryColumn, StringBuffer sql) {        
+        Integer srid = null;
+        try{
+          srid = getGeometrySRID(null, tableName, geometryColumn, currentConnection);
+        }
+        catch (SQLException ignoreForNow){}
+        sql.append("ST_AsBinary(");
+        sql.append("ST_Envelope(");
+        encodeColumnName(null, geometryColumn, sql);
+        sql.append(")");
+        if (srid != null){
+          sql.append(", ");
+          sql.append(srid);
+        }
         sql.append(")");
     }
 
     @Override
-    public void encodeGeometryEnvelope(String tableName, String geometryColumn, StringBuffer sql) {
-        sql.append("ST_AsBinary(");
-        sql.append("ST_Envelope(");
-        encodeColumnName(null, geometryColumn, sql);
-        sql.append("))");
-    }
-
-    @Override
     public Envelope decodeGeometryEnvelope(ResultSet rs, int column,
-            Connection cx) throws SQLException, IOException {
-        //String wkb = rs.getString( column );
+            Connection cx) throws SQLException, IOException {        
         byte[] wkb = rs.getBytes(column);
 
         try {
