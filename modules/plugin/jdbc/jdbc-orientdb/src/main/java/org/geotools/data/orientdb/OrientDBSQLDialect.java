@@ -179,24 +179,15 @@ public class OrientDBSQLDialect extends SQLDialect {
             int srid, Hints hints, StringBuffer sql) {
         sql.append("ST_AsBinary(");
         encodeColumnName(prefix, gatt.getLocalName(), sql);
-        sql.append(", ").append(4326).append(")");
+        sql.append(")");
     }
 
     @Override
-    public void encodeGeometryEnvelope(String tableName, String geometryColumn, StringBuffer sql) {        
-//        Integer srid = null;
-//        try{
-//          srid = getGeometrySRID(null, tableName, geometryColumn, currentConnection);
-//        }
-//        catch (SQLException ignoreForNow){}
+    public void encodeGeometryEnvelope(String tableName, String geometryColumn, StringBuffer sql) {
         sql.append("ST_AsBinary(");
         sql.append("ST_Envelope(");
         encodeColumnName(null, geometryColumn, sql);
         sql.append(")");
-//        if (srid != null){
-          sql.append(", ");
-          sql.append(4326);
-//        }
         sql.append(")");
     }
 

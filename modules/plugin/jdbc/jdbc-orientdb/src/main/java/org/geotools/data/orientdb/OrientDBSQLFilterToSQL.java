@@ -256,7 +256,7 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
             //WKT does not support linear rings
             g = g.getFactory().createLineString(((LinearRing) g).getCoordinateSequence());
         }
-        out.write("ST_GeomFromText('" + g.toText() + "', " + 4326 + ")");                
+        out.write("ST_GeomFromText('" + g.toText() + "')");                
     }
 
     @Override

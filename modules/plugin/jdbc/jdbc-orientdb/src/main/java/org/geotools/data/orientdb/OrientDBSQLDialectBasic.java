@@ -155,7 +155,7 @@ public class OrientDBSQLDialectBasic extends BasicSQLDialect {
         if (value != null) {
             sql.append("ST_GeomFromText('");
             sql.append(new WKTWriter().write(value));
-            sql.append("', ").append(4326).append(")");
+            sql.append(")");
         } else {
             sql.append("NULL");
         }
@@ -189,11 +189,7 @@ public class OrientDBSQLDialectBasic extends BasicSQLDialect {
         sql.append("ST_AsBinary(");
         sql.append("ST_Envelope(");
         encodeColumnName(geometryColumn, sql);
-        sql.append(")");
-        if (srid != null){
-          sql.append(", ");
-          sql.append(srid);
-        }
+        sql.append(")");        
         sql.append(")");
     }
 
