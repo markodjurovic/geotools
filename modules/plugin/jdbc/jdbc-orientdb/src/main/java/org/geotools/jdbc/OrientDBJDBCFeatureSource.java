@@ -17,14 +17,22 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.geotools.data.DefaultQuery;
+import org.geotools.data.FeatureReader;
+import org.geotools.data.FilteringFeatureReader;
+import org.geotools.data.MaxFeatureReader;
 import org.geotools.data.Query;
+import org.geotools.data.ReTypeFeatureReader;
+import org.geotools.data.Transaction;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.factory.Hints;
 import org.geotools.feature.AttributeTypeBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.opengis.feature.Association;
+import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
+import org.opengis.filter.Filter;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
@@ -358,5 +366,114 @@ public class OrientDBJDBCFeatureSource extends JDBCFeatureSource {
         } finally {
             getDataStore().releaseConnection(cx, state);
         }
+    }
+    
+    //instancing OrientdbFeatureReader instead JDBCFeatureReader
+    @Override
+    protected  FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
+        // split the filter
+        Filter[] split = splitFilter(query.getFilter());
+        Filter preFilter = split[0];
+        Filter postFilter = split[1];
+        boolean postFilterRequired = postFilter != null && postFilter != Filter.INCLUDE;
+
+        // rebuild a new query with the same params, but just the pre-filter
+        DefaultQuery preQuery = new DefaultQuery(query);
+        preQuery.setFilter(preFilter);
+        // in case of post filtering, we cannot do native paging
+        if(postFilterRequired) {
+            preQuery.setStartIndex(0);
+            preQuery.setMaxFeatures(Integer.MAX_VALUE);
+        }
+
+        // Build the feature type returned by this query. Also build an eventual extra feature type
+        // containing the attributes we might need in order to evaluate the post filter
+        SimpleFeatureType[] types = 
+            buildQueryAndReturnFeatureTypes(getSchema(), query.getPropertyNames(), postFilter);
+        SimpleFeatureType querySchema = types[0];
+        SimpleFeatureType returnedSchema = types[1];
+
+        //grab connection
+        Connection cx = getDataStore().getConnection(getState());
+        
+        //create the reader
+        FeatureReader<SimpleFeatureType, SimpleFeature> reader;
+        
+        try {            
+            SQLDialect dialect = getDataStore().getSQLDialect();                        
+
+            // allow dialect to override this if needed
+            if(getState().getTransaction() == Transaction.AUTO_COMMIT) {
+                cx.setAutoCommit(dialect.isAutoCommitQuery());
+            }
+
+            if (query.getJoins().isEmpty()) {
+                //regular query
+                if ( dialect instanceof PreparedStatementSQLDialect ) {
+                    PreparedStatement ps = getDataStore().selectSQLPS(querySchema, preQuery, cx);
+                    reader = new OrientDBFeatureReader( ps, cx, this, querySchema, query);
+                } else {
+                    //build up a statement for the content
+                    String sql = getDataStore().selectSQL(querySchema, preQuery);
+                    getDataStore().getLogger().fine(sql);
+        
+                    reader = new OrientDBFeatureReader(sql, cx, this, querySchema, query);
+                }
+            }
+            else {
+                JoinInfo join = JoinInfo.create(preQuery, this);
+
+                if ( dialect instanceof PreparedStatementSQLDialect ) {
+                    PreparedStatement ps =getDataStore().selectJoinSQLPS(querySchema, join, preQuery, cx);
+                    reader = new JDBCJoiningFeatureReader(ps, cx, this, querySchema, join, query);
+                } else {
+                    //build up a statement for the content
+                    String sql = getDataStore().selectJoinSQL(querySchema, join, preQuery);
+                    getDataStore().getLogger().fine(sql);
+        
+                    reader = new JDBCJoiningFeatureReader(sql, cx, this, querySchema, join, query);
+                }
+                
+                //check for post filters
+                if (join.hasPostFilters()) {
+                    reader = new JDBCJoiningFilteringFeatureReader(reader, join);
+                    //TODO: retyping 
+                }
+            }
+        } catch (Throwable e) { // NOSONAR
+            // close the connection
+            getDataStore().closeSafe(cx);
+            // safely rethrow
+            if (e instanceof Error) {
+                throw (Error) e;
+            } else {
+                throw (IOException) new IOException().initCause(e);
+            }
+        }
+        
+
+        // if post filter, wrap it
+        if (postFilterRequired) {
+            reader = new FilteringFeatureReader<SimpleFeatureType, SimpleFeature>(reader, postFilter);
+            if(!returnedSchema.equals(querySchema)) {
+                reader = new ReTypeFeatureReader(reader, returnedSchema);
+            }
+
+            // offset
+            int offset = query.getStartIndex() != null ? query.getStartIndex() : 0;
+            if(offset > 0 ) {
+                // skip the first n records
+                for(int i = 0; i < offset && reader.hasNext(); i++) {
+                    reader.next();
+                }
+            }
+
+            // max feature limit
+            if (query.getMaxFeatures() >= 0 && query.getMaxFeatures() < Integer.MAX_VALUE ) {
+                reader = new MaxFeatureReader<SimpleFeatureType, SimpleFeature>(reader, query.getMaxFeatures());
+            }
+        }
+
+        return reader;
     }
 }

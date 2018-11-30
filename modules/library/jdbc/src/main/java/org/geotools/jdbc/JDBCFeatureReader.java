@@ -486,7 +486,7 @@ public class JDBCFeatureReader implements  FeatureReader<SimpleFeatureType, Simp
      * and the fact that exposed pk can be only partially selected in the output
      * @return
      */
-    private int[] buildAttributeRsIndex() {
+    protected int[] buildAttributeRsIndex() {
         LinkedHashSet<String> pkColumns = dataStore.getColumnNames(pkey);
         List<String> pkColumnsList = new ArrayList<String>(pkColumns);
         int[] indexes = new int[featureType.getAttributeCount()];

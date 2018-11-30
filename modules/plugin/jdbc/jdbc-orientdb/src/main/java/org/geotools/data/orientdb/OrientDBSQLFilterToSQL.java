@@ -17,6 +17,8 @@
 package org.geotools.data.orientdb;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.CoordinateSequence;
+import com.vividsolutions.jts.geom.CoordinateSequenceFilter;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LinearRing;
 import org.geotools.data.jdbc.FilterToSQL;
@@ -38,6 +40,14 @@ import org.opengis.filter.spatial.Touches;
 import org.opengis.filter.spatial.Within;
 
 import java.io.IOException;
+import org.geotools.geometry.GeneralDirectPosition;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.operation.DefaultCoordinateOperationFactory;
+import org.opengis.geometry.DirectPosition;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.CoordinateOperation;
+import org.opengis.referencing.operation.TransformException;
 
 public class OrientDBSQLFilterToSQL extends FilterToSQL {
 
@@ -79,24 +89,174 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
             coordinate.y = -90.;
         }
     }
+    
+    private static void clampEasting(Coordinate coordinate){
+        if (coordinate.x < -84702.61914736108){
+            coordinate.x = -84702.61914736108;
+        }
+        if (coordinate.x > 676223.7241900009){
+            coordinate.x = 676223.7241900009;
+        }
+    }
+    
+    private static void clampNorthing(Coordinate coordinate){
+        if (coordinate.y < -9272.577651805477){
+            coordinate.y = -9272.577651805477;
+        }
+        if (coordinate.y > 1242876.667023777){
+            coordinate.y = 1242876.667023777;
+        }
+    }
 
-    private static void clampCoordinates(Geometry g) {
+    private static void clampCoordinates(Geometry g, Integer currentSRID) {
+        if (currentSRID == null){
+          return;
+        }
         Coordinate[] coordinates = g.getCoordinates();
         for (Coordinate coordinate : coordinates) {
-            clampLongitude(coordinate);
-            clampLattitude(coordinate);
+            if (currentSRID == 4326){
+                clampLongitude(coordinate);
+                clampLattitude(coordinate);
+            }
+            else if (currentSRID == 27700){
+                clampEasting(coordinate);
+                clampNorthing(coordinate);
+            }
+        }        
+    }
+    
+    public static void transformGeometryToWGS(Geometry g, Integer currentSRID){
+      if (currentSRID == null || currentSRID == -1){
+        return;
+      }
+      
+      g.apply(new CoordinateSequenceFilter() {
+        @Override
+        public void filter(CoordinateSequence seq, int i) {
+          Coordinate coordinate = seq.getCoordinate(i);
+          try{
+              CoordinateReferenceSystem wgs84crs = CRS.decode("EPSG:4326");//crsFac.createCoordinateReferenceSystem("4326");
+              CoordinateReferenceSystem osgbCrs = CRS.decode("EPSG:" + currentSRID);
+              CoordinateOperation op = new DefaultCoordinateOperationFactory().createOperation(osgbCrs, wgs84crs);
+              DirectPosition eastNorth = new GeneralDirectPosition(coordinate.x, coordinate.y);
+              DirectPosition latLng = op.getMathTransform().transform(eastNorth, eastNorth);
+              //longitude
+              seq.setOrdinate(i, 0, latLng.getOrdinate(0));
+              //latitude
+              seq.setOrdinate(i, 1, latLng.getOrdinate(1));
+          }
+          catch (FactoryException | TransformException exc){
+              exc.printStackTrace();
+          }
         }
+
+        @Override
+        public boolean isDone() {
+            return false;
+        }
+
+        @Override
+        public boolean isGeometryChanged() {
+            return true;
+        }
+      });
+      
+//      if (currentSRID == 27700){
+//        Coordinate[] coords = g.getCoordinates();
+//        for (Coordinate coordinate : coords) {
+////          CRSAuthorityFactory crsFac = ReferencingFactoryFinder.getCRSAuthorityFactory("EPSG", null);
+//          try{
+//            CoordinateReferenceSystem wgs84crs = CRS.decode("EPSG:4326");//crsFac.createCoordinateReferenceSystem("4326");
+//            CoordinateReferenceSystem osgbCrs = CRS.decode("EPSG:" + currentSRID);
+//            CoordinateOperation op = new DefaultCoordinateOperationFactory().createOperation(osgbCrs, wgs84crs);
+//            DirectPosition eastNorth = new GeneralDirectPosition(coordinate.x, coordinate.y);
+//            DirectPosition latLng = op.getMathTransform().transform(eastNorth, eastNorth);
+//            //longitude
+//            coordinate.x = latLng.getOrdinate(0);
+//            //latitude
+//            coordinate.y = latLng.getOrdinate(1);
+//          }
+//          catch (FactoryException | TransformException exc){
+//              exc.printStackTrace();
+//          }
+//        }
+//      }
+        int a = 0;
+        ++a;
+    }
+    
+    public static void transformGeometryFromWGS(Geometry g, Integer targetSrid){      
+        if (targetSrid == null){
+          return;
+        }
+        
+        g.apply(new CoordinateSequenceFilter() {
+          @Override
+          public void filter(CoordinateSequence seq, int i) {
+              Coordinate coordinate = seq.getCoordinate(i);
+              try{
+                CoordinateReferenceSystem wgs84crs = CRS.decode("EPSG:4326");
+                CoordinateReferenceSystem targetCRS = CRS.decode("EPSG:" + targetSrid);
+                CoordinateOperation op = new DefaultCoordinateOperationFactory().createOperation(wgs84crs, targetCRS);
+                DirectPosition latLng = new GeneralDirectPosition(coordinate.x, coordinate.y);
+                DirectPosition otherSystemCoords = op.getMathTransform().transform(latLng, latLng);
+                //longitude
+                seq.setOrdinate(i, 0, otherSystemCoords.getOrdinate(0));
+                //latitude
+                seq.setOrdinate(i, 1, otherSystemCoords.getOrdinate(1));
+              }
+              catch (FactoryException | TransformException exc){
+                  exc.printStackTrace();
+              }
+          }
+
+          @Override
+          public boolean isDone() {
+            return false;
+          }
+
+          @Override
+          public boolean isGeometryChanged() {
+            return true;
+          }
+        });
+        
+//        Coordinate[] coords = g.getCoordinates();
+//        for (Coordinate coordinate : coords) {
+//            try{
+//                CoordinateReferenceSystem wgs84crs = CRS.decode("EPSG:4326");
+//                CoordinateReferenceSystem targetCRS = CRS.decode("EPSG:" + targetSrid);
+//                CoordinateOperation op = new DefaultCoordinateOperationFactory().createOperation(wgs84crs, targetCRS);
+//                DirectPosition latLng = new GeneralDirectPosition(coordinate.x, coordinate.y);
+//                DirectPosition otherSystemCoords = op.getMathTransform().transform(latLng, latLng);
+//                //longitude
+//                coordinate.x = otherSystemCoords.getOrdinate(0);
+//                //latitude
+//                coordinate.y = otherSystemCoords.getOrdinate(1);
+//            }
+//            catch (FactoryException | TransformException exc){
+//                exc.printStackTrace();
+//            }
+//        }
+        int a = 0;
+        ++a;
+    }
+    
+    private void transformGeometryToWGS(Geometry g){
+      transformGeometryToWGS(g, currentSRID);
     }
 
     @Override
     protected void visitLiteralGeometry(Literal expression) throws IOException {
         Geometry g = (Geometry) evaluateLiteral(expression, Geometry.class);
-        clampCoordinates(g);
+        clampCoordinates(g, currentSRID);
+        transformGeometryToWGS(g);
+        clampCoordinates(g, 4326);
         if (g instanceof LinearRing) {
             //WKT does not support linear rings
             g = g.getFactory().createLineString(((LinearRing) g).getCoordinateSequence());
         }
-        out.write("ST_GeomFromText('" + g.toText() + "', " + currentSRID + ")");                
+        out.write("ST_GeomFromText('" + g.toText() + "', " + 4326 + ")");                
     }
 
     @Override

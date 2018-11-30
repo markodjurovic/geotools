@@ -171,42 +171,7 @@ public class OrientDBSQLDialect extends SQLDialect {
             dataStore.closeSafe(st);
         }
 
-        //execute SELECT srid(<columnName>) FROM <tableName> LIMIT 1;
-        sql = new StringBuffer();
-        sql.append("SELECT srid(");
-        encodeColumnName(null, columnName, sql);
-        sql.append(") ");
-        sql.append("FROM ");
-
-        if (schemaName != null) {
-            encodeTableName(schemaName, sql);
-            sql.append(".");
-        }
-
-        encodeSchemaName(tableName, sql);
-        sql.append(" WHERE ");
-        encodeColumnName(null, columnName, sql);
-        sql.append(" is not null LIMIT 1");
-
-        dataStore.getLogger().fine(sql.toString());
-
-        st = cx.createStatement();
-        try {
-            ResultSet rs = st.executeQuery(sql.toString());
-
-            try {
-                if (rs.next()) {
-                    return rs.getInt(1);
-                } else {
-                    //could not find out
-                    return null;
-                }
-            } finally {
-                dataStore.closeSafe(rs);
-            }
-        } finally {
-            dataStore.closeSafe(st);
-        }
+        return null;
     }
 
     @Override
@@ -214,24 +179,24 @@ public class OrientDBSQLDialect extends SQLDialect {
             int srid, Hints hints, StringBuffer sql) {
         sql.append("ST_AsBinary(");
         encodeColumnName(prefix, gatt.getLocalName(), sql);
-        sql.append(", ").append(srid).append(")");
+        sql.append(", ").append(4326).append(")");
     }
 
     @Override
     public void encodeGeometryEnvelope(String tableName, String geometryColumn, StringBuffer sql) {        
-        Integer srid = null;
-        try{
-          srid = getGeometrySRID(null, tableName, geometryColumn, currentConnection);
-        }
-        catch (SQLException ignoreForNow){}
+//        Integer srid = null;
+//        try{
+//          srid = getGeometrySRID(null, tableName, geometryColumn, currentConnection);
+//        }
+//        catch (SQLException ignoreForNow){}
         sql.append("ST_AsBinary(");
         sql.append("ST_Envelope(");
         encodeColumnName(null, geometryColumn, sql);
         sql.append(")");
-        if (srid != null){
+//        if (srid != null){
           sql.append(", ");
-          sql.append(srid);
-        }
+          sql.append(4326);
+//        }
         sql.append(")");
     }
 
