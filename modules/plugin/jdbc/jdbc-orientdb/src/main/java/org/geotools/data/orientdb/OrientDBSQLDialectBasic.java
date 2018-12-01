@@ -35,6 +35,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
+import static org.geotools.data.orientdb.OrientDBSQLFilterToSQL.clampCoordinates;
+import static org.geotools.data.orientdb.OrientDBSQLFilterToSQL.transformGeometryToWGS;
 
 public class OrientDBSQLDialectBasic extends BasicSQLDialect {
 
@@ -152,10 +154,13 @@ public class OrientDBSQLDialectBasic extends BasicSQLDialect {
     @Override
     public void encodeGeometryValue(Geometry value, int dimension, int srid, StringBuffer sql)
             throws IOException {
-        if (value != null) {
+      clampCoordinates(value, srid);
+      transformGeometryToWGS(value, srid);
+      clampCoordinates(value, 4326);
+      if (value != null) {
             sql.append("ST_GeomFromText('");
             sql.append(new WKTWriter().write(value));
-            sql.append(")");
+            sql.append("')");
         } else {
             sql.append("NULL");
         }

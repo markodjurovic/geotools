@@ -108,7 +108,7 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
         }
     }
 
-    private static void clampCoordinates(Geometry g, Integer currentSRID) {
+    public static void clampCoordinates(Geometry g, Integer currentSRID) {
         if (currentSRID == null){
           return;
         }
@@ -126,7 +126,7 @@ public class OrientDBSQLFilterToSQL extends FilterToSQL {
     }
     
     public static void transformGeometryToWGS(Geometry g, Integer currentSRID){
-      if (currentSRID == null || currentSRID == -1){
+      if (currentSRID == null || currentSRID == -1 || currentSRID == 4326){
         return;
       }
       
